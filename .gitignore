@@ -1,0 +1,27 @@
+# Family Games Center — monorepo
+
+# OS / éditeurs
+.DS_Store
+.idea/
+.vscode/
+
+# Env locaux (les .env.example sont commités, pas les .env.local)
+.env
+.env.local
+.env.*.local
+
+# Node / Next.js (frontend apps/web)
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# PHP / Symfony (backend apps/api)
+/apps/api/vendor/
+/apps/api/var/
+/apps/api/.phpunit.result.cache
+/apps/api/config/jwt/*.pem
+
+# Vercel
+.vercel

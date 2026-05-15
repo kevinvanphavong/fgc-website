@@ -1,0 +1,100 @@
+@import '../styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--cream);
+    font-family: var(--font-body), 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display), 'Bowlby One', sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    line-height: 1.05;
+    text-transform: uppercase;
+  }
+
+  /* Échelle responsive fluide — DS § 2.3 */
+  h1 {
+    font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+  }
+  h2 {
+    font-size: clamp(1.9rem, 3.6vw, 3rem);
+  }
+  h3 {
+    font-size: clamp(1.3rem, 2vw, 1.7rem);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Focus visible accessible (dette comblée vs maquette d'origine) */
+  *:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* Section title — DS § 2.3 */
+  .section-title {
+    font-size: clamp(2.2rem, 4.4vw, 3.6rem);
+  }
+
+  /* Hero title — DS § 2.3 */
+  .hero-title {
+    font-size: clamp(3rem, 6.5vw, 5.6rem);
+  }
+
+  /* Accent span inside titles — DS § 2.4 */
+  .section-title .accent {
+    color: var(--yellow);
+  }
+
+  /* Pop span (hero) — DS § 2.4 */
+  .hero-title .pop {
+    color: var(--yellow);
+    text-shadow: 0 4px 0 rgba(255, 0, 200, 0.4);
+  }
+
+  /* Section spacing — DS § 3.3 */
+  .section {
+    padding: 90px 0;
+  }
+  @media (max-width: 720px) {
+    .section {
+      padding: 60px 0;
+    }
+  }
+}
+
+@layer utilities {
+  .wrap {
+    max-width: 1240px;
+    margin-inline: auto;
+    padding-inline: 24px;
+  }
+}
