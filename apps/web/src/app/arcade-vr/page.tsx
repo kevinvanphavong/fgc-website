@@ -47,7 +47,7 @@ export default async function ArcadeVRPage() {
               <Button href="#vr" variant="pink">
                 Réalité Virtuelle
               </Button>
-              <Button href="/tarifs" variant="ghost">
+              <Button href="/tarifs-et-formules" variant="ghost">
                 Voir les tarifs
               </Button>
             </div>
@@ -186,10 +186,10 @@ export default async function ArcadeVRPage() {
               tarif à la carte.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Button href="/formules#pass" variant="primary">
+              <Button href="/tarifs-et-formules#pass" variant="primary">
                 Voir les Pass
               </Button>
-              <Button href="/formules#anniversaires" variant="pink">
+              <Button href="/tarifs-et-formules#anniversaires" variant="pink">
                 Formules anniversaires
               </Button>
             </div>

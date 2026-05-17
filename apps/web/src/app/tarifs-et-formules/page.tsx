@@ -3,17 +3,19 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import Button from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
 import {
+  fetchTarifs,
   fetchHebdoCards,
   fetchPassCards,
   fetchResaCards,
   fetchAnnivCards,
   fetchVipFeatures,
 } from '@/lib/content-api';
+import type { TarifCard } from '@/lib/tarifs';
 
 export const metadata: Metadata = {
-  title: 'Nos Formules',
+  title: 'Tarifs & Formules',
   description:
-    'Soirées hebdomadaires, Pass multi-activités, Réservations groupe SILVER/GOLD/PLATINIUM et anniversaires enfants — saison 2026/2027.',
+    'Tarifs 2026 du Family Games Center à Blois : activités à la carte, bar, snacking, soirées hebdomadaires, pass multi-activités, formules groupe et anniversaires enfants.',
 };
 
 function SectionDivider({
@@ -33,8 +35,84 @@ function SectionDivider({
   );
 }
 
-export default async function FormulesPage() {
-  const [HEBDO_CARDS, PASS_CARDS, RESA_CARDS, ANNIV_CARDS, VIP_FEATURES] = await Promise.all([
+function TarifCardComponent({
+  card,
+  variant = 'default',
+}: {
+  card: TarifCard;
+  variant?: 'default' | 'bar';
+}) {
+  const isBar = variant === 'bar';
+
+  return (
+    <article
+      className={`group flex flex-col gap-4 rounded-fgc-lg border p-7 transition-all hover:-translate-y-1 ${
+        isBar
+          ? 'border-fgc-yellow/30 bg-gradient-to-b from-fgc-yellow/10 to-fgc-bg/95'
+          : 'border-fgc-yellow/[0.18] bg-fgc-card'
+      } hover:border-fgc-yellow/40`}
+    >
+      <div
+        className={`grid h-14 w-14 place-items-center rounded-2xl text-[1.8rem] ${
+          isBar
+            ? 'bg-gradient-to-br from-fgc-pink-hot to-fgc-pink text-white shadow-[0_5px_0_#8e0d3d]'
+            : 'bg-gradient-to-br from-fgc-yellow to-fgc-yellow-dark text-fgc-purple shadow-fgc-btn-yellow'
+        }`}
+      >
+        {card.icon}
+      </div>
+
+      <div>
+        <div className="font-display text-[1.7rem] uppercase leading-none text-fgc-cream">
+          {card.name}
+        </div>
+        <div className="mt-1 text-[0.78rem] uppercase tracking-widest text-fgc-cream/55">
+          {card.unit}
+        </div>
+      </div>
+
+      <ul className="flex flex-col gap-2.5 border-t border-dashed border-white/10 pt-3.5">
+        {card.prices.map((line) => (
+          <li
+            key={line.label}
+            className="flex items-baseline gap-2 text-[0.95rem] text-fgc-cream/90"
+          >
+            <span className="shrink-0">{line.label}</span>
+            <span className="flex-1 -translate-y-1 border-b border-dotted border-white/15" />
+            <span
+              className={`whitespace-nowrap font-display text-[1.05rem] tracking-wide ${
+                line.price.includes('—') || line.price.startsWith('dès')
+                  ? 'text-fgc-pink-hot'
+                  : 'text-fgc-yellow'
+              }`}
+            >
+              {line.price}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {card.note && (
+        <div className="border-t border-dashed border-white/[0.08] pt-2 text-[0.82rem] leading-relaxed text-fgc-cream/60">
+          {card.note}
+        </div>
+      )}
+    </article>
+  );
+}
+
+export default async function TarifsEtFormulesPage() {
+  const [
+    tarifsActivites,
+    tarifsBar,
+    HEBDO_CARDS,
+    PASS_CARDS,
+    RESA_CARDS,
+    ANNIV_CARDS,
+    VIP_FEATURES,
+  ] = await Promise.all([
+    fetchTarifs('activites'),
+    fetchTarifs('bar'),
     fetchHebdoCards(),
     fetchPassCards(),
     fetchResaCards(),
@@ -50,33 +128,88 @@ export default async function FormulesPage() {
           <Breadcrumb
             items={[
               { label: 'Accueil', href: '/' },
-              { label: 'Nos Formules' },
+              { label: 'Tarifs & Formules' },
             ]}
           />
           <span className="mb-4 inline-block font-display text-[0.9rem] uppercase tracking-fgc-eyebrow text-fgc-pink-hot">
-            Formules &amp; Réservations
+            Saison 2026 / 2027
           </span>
           <h1 className="hero-title">
-            Formules <span className="pop">&amp; Pass.</span>
+            Tarifs <span className="pop">&amp; Formules.</span>
           </h1>
           <p className="mx-auto mt-4 max-w-fgc-lead text-[1.05rem] text-fgc-cream/85">
-            Soirées à thème, pass multi-activités, offres groupe et
-            anniversaires enfants — tout est ici. Les{' '}
-            <a
-              href="/tarifs"
-              className="text-fgc-yellow underline underline-offset-2"
-            >
-              tarifs à la carte
-            </a>{' '}
-            sont sur une page dédiée.
+            Tous les prix au m&ecirc;me endroit : activit&eacute;s &agrave; la
+            carte, bar &amp; snacking, soir&eacute;es &agrave; th&egrave;me, pass
+            multi-activit&eacute;s, offres groupe et anniversaires enfants.
           </p>
         </div>
       </section>
 
-      {/* 1 — Soirées hebdomadaires */}
-      <section className="section" id="hebdomadaires" style={{ paddingTop: 30 }}>
+      {/* ─── 1 — Tarifs à la carte : Activités ─── */}
+      <section className="section" id="activites" style={{ paddingTop: 30 }}>
         <div className="wrap">
-          <SectionDivider num="1" label="Soirées hebdomadaires" />
+          <SectionDivider num="1" label="Tarifs à la carte" />
+          <h2 className="section-title">
+            Activités <span className="accent">à l&apos;unité.</span>
+          </h2>
+
+          <div className="mt-8 grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
+            {tarifsActivites.map((card) => (
+              <TarifCardComponent key={card.name} card={card} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Bar & Snacking ─── */}
+      <section className="section" id="bar-snacking" style={{ paddingTop: 30 }}>
+        <div className="wrap">
+          <span className="mb-4 inline-block font-display text-[0.9rem] uppercase tracking-fgc-eyebrow text-fgc-pink-hot">
+            Bar &amp; Snacking
+          </span>
+          <h2 className="section-title">
+            À <span className="accent">l&apos;unité.</span>
+          </h2>
+
+          <div className="mt-8 grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
+            {tarifsBar.map((card) => (
+              <TarifCardComponent
+                key={card.name}
+                card={card}
+                variant="bar"
+              />
+            ))}
+          </div>
+
+          <div className="mt-10 rounded-r-[14px] border-l-[3px] border-fgc-yellow bg-fgc-yellow/[0.06] px-[22px] py-[18px] text-[0.88rem] leading-relaxed text-fgc-cream/80">
+            Tarifs susceptibles d&apos;évoluer selon les saisons et les
+            fournisseurs.{' '}
+            <strong className="text-fgc-yellow">
+              Soumis à TVA et au service.
+            </strong>{' '}
+            Pour les groupes de plus de 9 personnes, voir nos{' '}
+            <a
+              href="#pass"
+              className="text-fgc-yellow underline underline-offset-2"
+            >
+              Pass multi-activités
+            </a>{' '}
+            et{' '}
+            <a
+              href="#reservations-groupe"
+              className="text-fgc-yellow underline underline-offset-2"
+            >
+              Réservations groupe
+            </a>{' '}
+            ci-dessous.
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 2 — Soirées hebdomadaires ─── */}
+      <section className="section" id="hebdomadaires">
+        <div className="wrap">
+          <SectionDivider num="2" label="Soirées hebdomadaires" />
           <div className="mb-9 grid items-end gap-[60px] border-b border-dashed border-fgc-yellow/20 pb-[26px] lg:grid-cols-[1.2fr_1fr]">
             <div>
               <h2 className="section-title">
@@ -104,7 +237,6 @@ export default async function FormulesPage() {
                     : 'border-fgc-yellow/[0.18] hover:border-fgc-yellow/40'
                 )}
               >
-                {/* Magenta glow */}
                 <div className="pointer-events-none absolute -right-10 -top-10 h-[220px] w-[220px] rounded-full bg-[radial-gradient(circle,rgba(255,45,135,0.25)_0%,transparent_65%)]" />
 
                 {card.featured && (
@@ -127,7 +259,7 @@ export default async function FormulesPage() {
                   </p>
                 )}
 
-                {card.bullets && (
+                {card.bullets && card.bullets.length > 0 && (
                   <ul className="flex flex-col gap-2">
                     {card.bullets.map((b) => (
                       <li
@@ -166,10 +298,10 @@ export default async function FormulesPage() {
         </div>
       </section>
 
-      {/* 2 — Pass multi-activités */}
+      {/* ─── 3 — Pass multi-activités ─── */}
       <section className="section" id="pass">
         <div className="wrap">
-          <SectionDivider num="2" label="Pass multi-activités" />
+          <SectionDivider num="3" label="Pass multi-activités" />
           <div className="mb-9 grid items-end gap-[60px] border-b border-dashed border-fgc-yellow/20 pb-[26px] lg:grid-cols-[1.2fr_1fr]">
             <div>
               <h2 className="section-title">
@@ -177,7 +309,7 @@ export default async function FormulesPage() {
               </h2>
             </div>
             <p className="text-[1rem] leading-relaxed text-fgc-cream/80">
-              Combinez bowling, VR, arcade et plus encore.{' '}
+              Bowling à volonté + bonus.{' '}
               <em className="not-italic font-semibold text-fgc-yellow">
                 Plus vous ajoutez, plus vous économisez.
               </em>
@@ -212,7 +344,6 @@ export default async function FormulesPage() {
                   </span>
                 </div>
 
-                {/* Features breakdown */}
                 <div className="flex flex-col gap-1.5 border-t border-dashed border-white/10 pt-3">
                   {card.features.map((f) => (
                     <div
@@ -224,7 +355,6 @@ export default async function FormulesPage() {
                   ))}
                 </div>
 
-                {/* Totals */}
                 <div className="mt-auto flex items-baseline justify-between border-t border-white/10 pt-2.5 font-display text-[0.72rem] uppercase tracking-wider text-fgc-cream/55">
                   <span>Séparé</span>
                   <strong className="text-[1rem] tracking-normal text-fgc-cream">
@@ -232,7 +362,6 @@ export default async function FormulesPage() {
                   </strong>
                 </div>
 
-                {/* Savings */}
                 <div className="flex items-center justify-between rounded-xl border border-[rgba(132,204,22,0.3)] bg-[rgba(132,204,22,0.12)] px-3.5 py-2 font-display uppercase tracking-wide">
                   <span className="text-[0.72rem] text-fgc-cream/70">
                     Économie
@@ -247,10 +376,10 @@ export default async function FormulesPage() {
         </div>
       </section>
 
-      {/* 3 — Réservations groupe */}
+      {/* ─── 4 — Réservations groupe ─── */}
       <section className="section" id="reservations-groupe">
         <div className="wrap">
-          <SectionDivider num="3" label="Réservations groupe" />
+          <SectionDivider num="4" label="Réservations groupe" />
           <div className="mb-9 grid items-end gap-[60px] border-b border-dashed border-fgc-yellow/20 pb-[26px] lg:grid-cols-[1.2fr_1fr]">
             <div>
               <h2 className="section-title">
@@ -316,7 +445,7 @@ export default async function FormulesPage() {
                   </ul>
 
                   <div className="mt-auto rounded-xl border border-fgc-yellow/20 bg-fgc-yellow/[0.06] p-3.5 text-[0.85rem] leading-relaxed text-fgc-cream/70">
-                    💡 {card.keyPoint}
+                    {card.keyPoint}
                   </div>
                 </article>
               );
@@ -325,10 +454,10 @@ export default async function FormulesPage() {
         </div>
       </section>
 
-      {/* 4 — Anniversaires */}
+      {/* ─── 5 — Anniversaires ─── */}
       <section className="section" id="anniversaires">
         <div className="wrap">
-          <SectionDivider num="4" label="Anniversaires enfants" />
+          <SectionDivider num="5" label="Anniversaires enfants" />
           <div className="mb-9 grid items-end gap-[60px] border-b border-dashed border-fgc-yellow/20 pb-[26px] lg:grid-cols-[1.2fr_1fr]">
             <div>
               <h2 className="section-title">
@@ -385,7 +514,7 @@ export default async function FormulesPage() {
                       key={f}
                       className="flex items-start gap-2 text-[0.9rem] text-fgc-cream/85"
                     >
-                      <span className="mt-0.5 text-fgc-yellow">✓</span>
+                      <span className="mt-0.5 text-fgc-yellow">&#10003;</span>
                       {f}
                     </li>
                   ))}
@@ -397,7 +526,7 @@ export default async function FormulesPage() {
           {/* VIP Features */}
           <div className="mt-10 rounded-fgc-lg border border-fgc-yellow/20 bg-fgc-card p-8">
             <h3 className="mb-6 text-center font-display text-[1.1rem] uppercase tracking-wider text-fgc-yellow">
-              🎉 Inclus dans toutes les formules — Service VIP Anniversaire
+              Inclus dans toutes les formules — Service VIP Anniversaire
             </h3>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {VIP_FEATURES.map((feat) => (
@@ -422,10 +551,10 @@ export default async function FormulesPage() {
         </div>
       </section>
 
-      {/* 5 — EVG/EVJF */}
+      {/* ─── 6 — EVG/EVJF ─── */}
       <section className="section" id="evg-evjf">
         <div className="wrap">
-          <SectionDivider num="5" label="EVG / EVJF / Événements" />
+          <SectionDivider num="6" label="EVG / EVJF / Événements" />
           <div className="mx-auto max-w-3xl rounded-fgc-lg border border-fgc-pink-hot/30 bg-gradient-to-b from-fgc-pink-hot/10 to-fgc-bg/95 p-10 text-center">
             <h2 className="section-title mb-4">
               EVG, EVJF <span className="accent">&amp; événements.</span>

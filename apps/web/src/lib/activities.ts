@@ -69,6 +69,6 @@ export const ACTIVITIES: Activity[] = [
     name: 'Événements',
     description:
       'Anniversaires, EVG, EVJF, séminaires, team building… Des formules clés en main pour tous vos moments.',
-    href: '/formules',
+    href: '/tarifs-et-formules#anniversaires',
   },
 ];

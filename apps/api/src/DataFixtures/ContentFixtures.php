@@ -182,10 +182,10 @@ class ContentFixtures extends Fixture
     private function loadPass(ObjectManager $m): void
     {
         $cards = [
-            ['key' => 'chill', 'name' => 'Pass Chill', 'price' => '17,90€/pers.', 'features' => ['1 partie de bowling + chaussures', '1 session de réalité virtuelle', '2 jetons arcade', '1 soda offert'], 'separatePrice' => '22,70€', 'savings' => '−21 %', 'featured' => false],
-            ['key' => 'confort', 'name' => 'Pass Confort', 'price' => '26,90€/pers.', 'features' => ['2 parties de bowling + chaussures', '2 sessions de réalité virtuelle', '4 jetons arcade', '1 soda offert'], 'separatePrice' => '38,60€', 'savings' => '−30 %', 'featured' => true],
-            ['key' => 'vip', 'name' => 'Pass VIP', 'price' => '34,90€/pers.', 'features' => ['2 parties de bowling + chaussures', '3 sessions de réalité virtuelle', '6 jetons arcade', '1 soda offert'], 'separatePrice' => '46,60€', 'savings' => '−25 %', 'featured' => false],
-            ['key' => 'multiverse', 'name' => 'Pass Multiverse', 'price' => '43,90€/pers.', 'features' => ['3 parties de bowling + chaussures', '3 sessions de réalité virtuelle', '6 jetons arcade', '1 activité au choix (billard, fléchettes, karaoké, blindtest)', '1 soda offert'], 'separatePrice' => '62,50€', 'savings' => '−30 %', 'featured' => false],
+            ['key' => 'chill', 'name' => 'Pass Chill', 'price' => '27,90€/pers.', 'features' => ['Bowling à volonté + chaussures', '1 session de réalité virtuelle', '2 jetons arcade', '1 soda offert'], 'separatePrice' => '32,90€', 'savings' => '−15 %', 'featured' => false],
+            ['key' => 'confort', 'name' => 'Pass Confort', 'price' => '33,90€/pers.', 'features' => ['Bowling à volonté + chaussures', '2 sessions de réalité virtuelle', '4 jetons arcade', '1 soda offert'], 'separatePrice' => '40,90€', 'savings' => '−17 %', 'featured' => true],
+            ['key' => 'vip', 'name' => 'Pass VIP', 'price' => '37,90€/pers.', 'features' => ['Bowling à volonté + chaussures', '3 sessions de réalité virtuelle', '6 jetons arcade', '1 soda offert'], 'separatePrice' => '48,90€', 'savings' => '−22 %', 'featured' => false],
+            ['key' => 'multiverse', 'name' => 'Pass Multiverse', 'price' => '47,90€/pers.', 'features' => ['Bowling à volonté + chaussures', '3 sessions de réalité virtuelle', '6 jetons arcade', '1 activité au choix : 1h billard/fléchettes ou 30min karaoké/blindtest', '1 soda offert'], 'separatePrice' => '63,90€', 'savings' => '−25 %', 'featured' => false],
         ];
 
         foreach ($cards as $pos => $d) {

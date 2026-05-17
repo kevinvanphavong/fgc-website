@@ -155,7 +155,7 @@ export function PricingSection({ page }: { page: ActivityPage }) {
               </ul>
 
               <Button
-                href="/tarifs"
+                href="/tarifs-et-formules"
                 variant={card.featured ? 'primary' : 'ghost'}
                 className="w-full justify-center"
               >

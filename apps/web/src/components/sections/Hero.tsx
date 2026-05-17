@@ -47,7 +47,7 @@ export default function Hero() {
             >
               Réserver une partie
             </Button>
-            <Button href="/tarifs" variant="ghost">
+            <Button href="/tarifs-et-formules" variant="ghost">
               Voir les tarifs
             </Button>
           </div>

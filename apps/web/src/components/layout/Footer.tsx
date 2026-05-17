@@ -22,8 +22,7 @@ const FOOTER_LINKS = {
   infos: {
     title: 'Infos pratiques',
     links: [
-      { label: 'Tarifs', href: '/tarifs' },
-      { label: 'Nos Formules', href: '/formules' },
+      { label: 'Tarifs & Formules', href: '/tarifs-et-formules' },
       { label: 'Bar & Snack', href: '/bar-snack' },
       { label: 'Entreprises', href: '/entreprises' },
       { label: 'Contact', href: '/contact' },

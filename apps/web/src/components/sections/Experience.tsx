@@ -31,7 +31,7 @@ export default function Experience() {
             <Button href="/entreprises" variant="pink">
               Pour les entreprises
             </Button>
-            <Button href="/formules" variant="ghost">
+            <Button href="/tarifs-et-formules" variant="ghost">
               Voir les formules
             </Button>
           </div>

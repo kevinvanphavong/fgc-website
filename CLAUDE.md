@@ -139,6 +139,12 @@ Pour Claude Code, attaquer dans cet ordre — chaque étape doit être validée 
 
 **Convention de commits** : Conventional Commits (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`). Préfixer le scope par `web:` ou `api:` quand pertinent.
 
+### Workflow git — règle Kévin
+
+**Par défaut, toutes les modifs vont sur `main`** (commit + merge direct si tu pars d'un worktree). Kévin lance `npm run dev` depuis le repo principal — travailler sur une branche isolée le force à switcher de dev server à chaque test, ce qu'il ne veut pas.
+
+**N'utilise une branche dédiée que si Kévin te le dit explicitement** (ex. "fais une PR pour…", "branche feat/…"). Sinon, le worktree de session est juste un dossier de travail technique : tu fais tes modifs directement sur les fichiers de main, tu commit, c'est tout.
+
 ---
 
 ## 6. Règles d'implémentation — Frontend

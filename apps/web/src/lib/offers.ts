@@ -14,7 +14,7 @@ export const OFFERS: Offer[] = [
     title: 'Bowling à volonté',
     badge: '20€',
     badgeVariant: 'yellow',
-    href: '/tarifs',
+    href: '/tarifs-et-formules',
   },
   {
     key: 'afterwork',
@@ -22,7 +22,7 @@ export const OFFERS: Offer[] = [
     title: 'Pack Afterwork',
     badge: '−24%',
     badgeVariant: 'pink',
-    href: '/tarifs',
+    href: '/tarifs-et-formules',
   },
   {
     key: 'anniversaires',
@@ -30,7 +30,7 @@ export const OFFERS: Offer[] = [
     title: 'Anniv. enfants',
     badge: 'Dès 6 ans',
     badgeVariant: 'cream',
-    href: '/formules',
+    href: '/tarifs-et-formules#anniversaires',
   },
   {
     key: 'carte-membre',
@@ -38,6 +38,6 @@ export const OFFERS: Offer[] = [
     title: 'Carte membre',
     badge: 'Dès 35€',
     badgeVariant: 'yellow',
-    href: '/tarifs',
+    href: '/tarifs-et-formules',
   },
 ];

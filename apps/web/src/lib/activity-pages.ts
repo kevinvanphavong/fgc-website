@@ -59,7 +59,7 @@ export const ACTIVITY_PAGES: Record<string, ActivityPage> = {
     ],
     ctas: [
       { label: 'Réserver une piste', href: RESERVATION_URL, variant: 'primary', external: true },
-      { label: 'Voir les tarifs', href: '/tarifs', variant: 'ghost' },
+      { label: 'Voir les tarifs', href: '/tarifs-et-formules', variant: 'ghost' },
     ],
     badgeCta: 'Bowling à volonté · Lundi & Mardi dès 20h30 · 20€',
     badgeCtaSub: 'Parties illimitées, chaussures incluses.',
@@ -125,7 +125,7 @@ export const ACTIVITY_PAGES: Record<string, ActivityPage> = {
     ],
     ctas: [
       { label: 'Réserver une table', href: RESERVATION_URL, variant: 'primary', external: true },
-      { label: 'Voir les tarifs', href: '/tarifs', variant: 'ghost' },
+      { label: 'Voir les tarifs', href: '/tarifs-et-formules', variant: 'ghost' },
     ],
     inlinePrice: {
       price: '15€ / heure / table',
@@ -152,7 +152,7 @@ export const ACTIVITY_PAGES: Record<string, ActivityPage> = {
     ],
     ctas: [
       { label: 'Venir jouer', href: RESERVATION_URL, variant: 'primary', external: true },
-      { label: 'Formules anniversaires', href: '/formules', variant: 'ghost' },
+      { label: 'Formules anniversaires', href: '/tarifs-et-formules', variant: 'ghost' },
     ],
   },
 
@@ -173,7 +173,7 @@ export const ACTIVITY_PAGES: Record<string, ActivityPage> = {
     ],
     ctas: [
       { label: 'Réserver une session', href: RESERVATION_URL, variant: 'primary', external: true },
-      { label: 'Voir les tarifs', href: '/tarifs', variant: 'ghost' },
+      { label: 'Voir les tarifs', href: '/tarifs-et-formules', variant: 'ghost' },
     ],
   },
 
@@ -194,7 +194,7 @@ export const ACTIVITY_PAGES: Record<string, ActivityPage> = {
     ],
     ctas: [
       { label: 'Réserver un box', href: RESERVATION_URL, variant: 'primary', external: true },
-      { label: 'Voir les formules', href: '/formules', variant: 'ghost' },
+      { label: 'Voir les formules', href: '/tarifs-et-formules', variant: 'ghost' },
     ],
   },
 
@@ -236,7 +236,7 @@ export const ACTIVITY_PAGES: Record<string, ActivityPage> = {
     ],
     ctas: [
       { label: 'Réserver une borne', href: RESERVATION_URL, variant: 'primary', external: true },
-      { label: 'Voir les tarifs', href: '/tarifs', variant: 'ghost' },
+      { label: 'Voir les tarifs', href: '/tarifs-et-formules', variant: 'ghost' },
     ],
     inlinePrice: {
       price: '18€ / heure',
