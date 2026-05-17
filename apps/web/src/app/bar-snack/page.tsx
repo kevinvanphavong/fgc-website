@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Button from '@/components/ui/Button';
-import { MENU_SECTIONS } from '@/lib/menu';
+import { fetchMenuSections } from '@/lib/content-api';
 
 export const metadata: Metadata = {
   title: 'Bar & Snack',
@@ -10,7 +10,9 @@ export const metadata: Metadata = {
     'Bar à cocktails, smoothies, milkshakes, pizzas, snacks sucrés & salés au Family Games Center. Commande sur tablette ou QR code.',
 };
 
-export default function BarSnackPage() {
+export default async function BarSnackPage() {
+  const MENU_SECTIONS = await fetchMenuSections();
+
   return (
     <>
       {/* Hero */}

@@ -1,15 +1,18 @@
 import type { Metadata } from 'next';
 import { ACTIVITY_PAGES } from '@/lib/activity-pages';
+import { fetchActivityPage } from '@/lib/content-api';
 import PageHero, { InlinePriceCard } from '@/components/sections/PageHero';
 
-const page = ACTIVITY_PAGES.flechettes;
+const staticPage = ACTIVITY_PAGES.flechettes;
 
 export const metadata: Metadata = {
   title: 'Fléchettes',
-  description: page.description,
+  description: staticPage.description,
 };
 
-export default function FlechettesPage() {
+export default async function FlechettesPage() {
+  const page = (await fetchActivityPage('flechettes')) ?? staticPage;
+
   return (
     <>
       <PageHero page={page} />

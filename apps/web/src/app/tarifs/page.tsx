@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Breadcrumb from '@/components/ui/Breadcrumb';
-import { TARIFS_ACTIVITES, TARIFS_BAR } from '@/lib/tarifs';
+import { fetchTarifs } from '@/lib/content-api';
 import type { TarifCard } from '@/lib/tarifs';
 
 export const metadata: Metadata = {
@@ -75,7 +75,12 @@ function TarifCardComponent({
   );
 }
 
-export default function TarifsPage() {
+export default async function TarifsPage() {
+  const [tarifsActivites, tarifsBar] = await Promise.all([
+    fetchTarifs('activites'),
+    fetchTarifs('bar'),
+  ]);
+
   return (
     <>
       {/* Hero */}
@@ -119,7 +124,7 @@ export default function TarifsPage() {
           </h2>
 
           <div className="mt-8 grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
-            {TARIFS_ACTIVITES.map((card) => (
+            {tarifsActivites.map((card) => (
               <TarifCardComponent key={card.name} card={card} />
             ))}
           </div>
@@ -137,7 +142,7 @@ export default function TarifsPage() {
           </h2>
 
           <div className="mt-8 grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
-            {TARIFS_BAR.map((card) => (
+            {tarifsBar.map((card) => (
               <TarifCardComponent
                 key={card.name}
                 card={card}

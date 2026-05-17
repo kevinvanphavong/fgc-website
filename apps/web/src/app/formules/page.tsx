@@ -3,12 +3,12 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import Button from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
 import {
-  HEBDO_CARDS,
-  PASS_CARDS,
-  RESA_CARDS,
-  ANNIV_CARDS,
-  VIP_FEATURES,
-} from '@/lib/formules';
+  fetchHebdoCards,
+  fetchPassCards,
+  fetchResaCards,
+  fetchAnnivCards,
+  fetchVipFeatures,
+} from '@/lib/content-api';
 
 export const metadata: Metadata = {
   title: 'Nos Formules',
@@ -33,7 +33,15 @@ function SectionDivider({
   );
 }
 
-export default function FormulesPage() {
+export default async function FormulesPage() {
+  const [HEBDO_CARDS, PASS_CARDS, RESA_CARDS, ANNIV_CARDS, VIP_FEATURES] = await Promise.all([
+    fetchHebdoCards(),
+    fetchPassCards(),
+    fetchResaCards(),
+    fetchAnnivCards(),
+    fetchVipFeatures(),
+  ]);
+
   return (
     <>
       {/* Hero */}

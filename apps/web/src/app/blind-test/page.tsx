@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
 import { ACTIVITY_PAGES } from '@/lib/activity-pages';
+import { fetchActivityPage } from '@/lib/content-api';
 import PageHero from '@/components/sections/PageHero';
 
-const page = ACTIVITY_PAGES['blind-test'];
+const staticPage = ACTIVITY_PAGES['blind-test'];
 
 export const metadata: Metadata = {
   title: 'Blind Test',
-  description: page.description,
+  description: staticPage.description,
 };
 
-export default function BlindTestPage() {
+export default async function BlindTestPage() {
+  const page = (await fetchActivityPage('blind-test')) ?? staticPage;
+
   return <PageHero page={page} />;
 }

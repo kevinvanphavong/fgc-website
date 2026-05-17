@@ -1,11 +1,13 @@
 'use client';
 
 import SectionHeader from '@/components/ui/SectionHeader';
+import type { DaySchedule } from '@/lib/schedule';
 import { SCHEDULE } from '@/lib/schedule';
 import { cn } from '@/lib/cn';
 
-export default function Schedule() {
+export default function Schedule({ data }: { data?: DaySchedule[] }) {
   const today = new Date().getDay();
+  const schedule = data ?? SCHEDULE;
 
   return (
     <section className="section">
@@ -21,7 +23,7 @@ export default function Schedule() {
         />
 
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
-          {SCHEDULE.map((day) => {
+          {schedule.map((day) => {
             const isToday = day.jsDay === today;
             return (
               <div

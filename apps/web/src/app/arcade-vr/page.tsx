@@ -4,9 +4,7 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import FeatureList from '@/components/ui/FeatureList';
 import Button from '@/components/ui/Button';
 import { ACTIVITY_PAGES } from '@/lib/activity-pages';
-
-const arcade = ACTIVITY_PAGES.arcade;
-const vr = ACTIVITY_PAGES['realite-virtuelle'];
+import { fetchActivityPage } from '@/lib/content-api';
 
 export const metadata: Metadata = {
   title: 'Arcade & Réalité Virtuelle',
@@ -14,7 +12,10 @@ export const metadata: Metadata = {
     '150 m² d\'arcade nouvelle génération et espace VR immersif au Family Games Center de Blois. Flippers, simulateurs, bornes à lots, escape games VR et jeux multijoueur.',
 };
 
-export default function ArcadeVRPage() {
+export default async function ArcadeVRPage() {
+  const arcade = (await fetchActivityPage('arcade')) ?? ACTIVITY_PAGES.arcade;
+  const vr = (await fetchActivityPage('realite-virtuelle')) ?? ACTIVITY_PAGES['realite-virtuelle'];
+
   return (
     <>
       {/* Hero commun */}

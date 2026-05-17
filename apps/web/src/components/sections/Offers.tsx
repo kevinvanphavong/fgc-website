@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import SectionHeader from '@/components/ui/SectionHeader';
+import type { Offer } from '@/lib/offers';
 import { OFFERS } from '@/lib/offers';
 import { cn } from '@/lib/cn';
 
@@ -10,7 +11,9 @@ const BADGE_STYLES = {
   cream: 'bg-fgc-cream-warm text-fgc-purple border border-fgc-yellow-dark',
 } as const;
 
-export default function Offers() {
+export default function Offers({ data }: { data?: Offer[] }) {
+  const offers = data ?? OFFERS;
+
   return (
     <section className="section">
       <div className="wrap">
@@ -25,7 +28,7 @@ export default function Offers() {
         />
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {OFFERS.map((offer) => (
+          {offers.map((offer) => (
             <Link
               key={offer.key}
               href={offer.href}
@@ -51,7 +54,7 @@ export default function Offers() {
                 <span
                   className={cn(
                     'inline-block rounded-full px-4 py-1.5 font-display text-[0.8rem] uppercase',
-                    BADGE_STYLES[offer.badgeVariant]
+                    BADGE_STYLES[offer.badgeVariant as keyof typeof BADGE_STYLES] ?? BADGE_STYLES.yellow
                   )}
                 >
                   {offer.badge}
