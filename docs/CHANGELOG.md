@@ -4,6 +4,14 @@
 
 ## 2026-05-18
 
+- **`main`** — `chore(api)`: kill EasyAdmin (PR4 final) — -15 controllers, -1 bundle, -3 security blocks, -1 route file.
+  - **Étape 0** dry-run : `grep` n'a remonté que les fichiers à supprimer (les 15 controllers + bundles.php + routes/easyadmin.yaml).
+  - **Étape 1** : `rm -rf src/Controller/Admin/` (DashboardController + LoginController + 13 CrudControllers) + `rm -rf templates/admin/` (login.html.twig).
+  - **Étape 2** : `rm config/routes/easyadmin.yaml` + suppression du firewall `admin`, de l'access_control `^/admin/login` / `^/admin` dans `security.yaml`. Provider `app_user_provider` préservé (consommé par les firewalls API).
+  - **Étape 3** : `composer remove easycorp/easyadmin-bundle` (= -1 ligne dans bundles.php, -4 deps transitives unconfigurées : twig/extra-bundle, ux-twig-component, translation, easyadmin). `translation.yaml` + `twig_component.yaml` retirés par les recipes.
+  - **Étape 4** vérifications : `cache:clear` OK. `grep -r "EasyCorp|easyadmin|admin_login|admin_logout" .` → 0 résultat (hors vendor). `debug:router | grep admin` → ne renvoie plus que les routes Next-facing `/api/admin/dashboard` + `/api/admin/notifications/mark-read` (PR3). `debug:container | grep easyadmin` → 0 résultat. `composer.lock` ne contient plus `easycorp/easyadmin-bundle`. URL `http://localhost:8000/admin` → 404 (au lieu de l'écran EasyAdmin). URL `http://localhost:3000/admin` (Next) → toujours fonctionnel.
+  - **À noter** : la modification antérieure de `DashboardController.php` (qui était en M dans git status avant PR4) disparaît avec la suppression — pas de conflit puisque le fichier entier est supprimé.
+
 - **`main`** — `feat(admin,api)`: module Contenus 6 tabs (PR4 phase 1).
   - **API** : 13 entités du site public (HebdoCard, PassCard, ResaCard, AnnivCard, VipFeature, TarifCard, TarifPriceLine, DaySchedule, Offer, ActivityPageContent, MenuSection, MenuCategory, MenuItem) étendues avec opérations admin Post/Put/Delete sécurisées `ROLE_STAFF`. GET publics préservés. `denormalizationContext` séparé du `normalizationContext` (groupe `xxx:write`). Validator `Assert\NotBlank` sur 1-3 champs critiques par entité. `id` + `position` exposés en lecture. Installé `symfony/expression-language` (requis par les expressions `is_granted(...)` dans `security`).
   - **Migration** : `Version20260518150000` ajoute `active BOOLEAN NOT NULL DEFAULT TRUE` à `offer` (toggle visibilité home sans suppression). Le mockup propose un flag `active` partout — décision pragmatique V1 : seul Offer en bénéficie (modifier/supprimer suffit pour les autres entités).
