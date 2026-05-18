@@ -4,12 +4,24 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Get;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
 #[ApiResource(
-    operations: [new GetCollection(uriTemplate: '/formules/pass')],
+    operations: [
+        new GetCollection(uriTemplate: '/formules/pass'),
+        new GetCollection(security: "is_granted('ROLE_STAFF')"),
+        new Get(security: "is_granted('ROLE_STAFF')"),
+        new Post(security: "is_granted('ROLE_STAFF')", denormalizationContext: ['groups' => ['formule:write']]),
+        new Put(security: "is_granted('ROLE_STAFF')", denormalizationContext: ['groups' => ['formule:write']]),
+        new Delete(security: "is_granted('ROLE_STAFF')"),
+    ],
     normalizationContext: ['groups' => ['formule:read']],
     order: ['position' => 'ASC'],
     paginationEnabled: false,
@@ -18,38 +30,43 @@ class PassCard
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
+    #[Groups(['formule:read'])]
     #[ORM\Column]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
-    #[Groups(['formule:read'])]
+    #[Groups(['formule:read', 'formule:write'])]
+    #[Assert\NotBlank]
     private string $key = '';
 
     #[ORM\Column(length: 100)]
-    #[Groups(['formule:read'])]
+    #[Groups(['formule:read', 'formule:write'])]
+    #[Assert\NotBlank]
     private string $name = '';
 
     #[ORM\Column(length: 50)]
-    #[Groups(['formule:read'])]
+    #[Groups(['formule:read', 'formule:write'])]
+    #[Assert\NotBlank]
     private string $price = '';
 
     #[ORM\Column(type: 'json')]
-    #[Groups(['formule:read'])]
+    #[Groups(['formule:read', 'formule:write'])]
     private array $features = [];
 
     #[ORM\Column(length: 50)]
-    #[Groups(['formule:read'])]
+    #[Groups(['formule:read', 'formule:write'])]
     private string $separatePrice = '';
 
     #[ORM\Column(length: 50)]
-    #[Groups(['formule:read'])]
+    #[Groups(['formule:read', 'formule:write'])]
     private string $savings = '';
 
     #[ORM\Column]
-    #[Groups(['formule:read'])]
+    #[Groups(['formule:read', 'formule:write'])]
     private bool $featured = false;
 
     #[ORM\Column]
+    #[Groups(['formule:read', 'formule:write'])]
     private int $position = 0;
 
     public function getId(): ?int { return $this->id; }

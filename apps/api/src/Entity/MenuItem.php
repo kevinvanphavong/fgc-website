@@ -2,30 +2,52 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiResource(
+    operations: [
+        new GetCollection(security: "is_granted('ROLE_STAFF')"),
+        new Get(security: "is_granted('ROLE_STAFF')"),
+        new Post(security: "is_granted('ROLE_STAFF')", denormalizationContext: ['groups' => ['menu:write']]),
+        new Put(security: "is_granted('ROLE_STAFF')", denormalizationContext: ['groups' => ['menu:write']]),
+        new Delete(security: "is_granted('ROLE_STAFF')"),
+    ],
+    normalizationContext: ['groups' => ['menu:read']],
+    paginationEnabled: false,
+)]
 #[ORM\Entity]
 class MenuItem
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
+    #[Groups(['menu:read'])]
     #[ORM\Column]
     private ?int $id = null;
 
     #[ORM\Column(length: 150)]
-    #[Groups(['menu:read'])]
+    #[Groups(['menu:read', 'menu:write'])]
+    #[Assert\NotBlank]
     private string $name = '';
 
     #[ORM\Column(length: 300)]
-    #[Groups(['menu:read'])]
+    #[Groups(['menu:read', 'menu:write'])]
     private string $description = '';
 
     #[ORM\Column(length: 50)]
-    #[Groups(['menu:read'])]
+    #[Groups(['menu:read', 'menu:write'])]
+    #[Assert\NotBlank]
     private string $price = '';
 
     #[ORM\Column]
+    #[Groups(['menu:read', 'menu:write'])]
     private int $position = 0;
 
     #[ORM\ManyToOne(targetEntity: MenuCategory::class, inversedBy: 'items')]

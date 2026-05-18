@@ -4,6 +4,24 @@
 
 ## 2026-05-18
 
+- **`main`** — `feat(admin,api)`: module Contenus 6 tabs (PR4 phase 1).
+  - **API** : 13 entités du site public (HebdoCard, PassCard, ResaCard, AnnivCard, VipFeature, TarifCard, TarifPriceLine, DaySchedule, Offer, ActivityPageContent, MenuSection, MenuCategory, MenuItem) étendues avec opérations admin Post/Put/Delete sécurisées `ROLE_STAFF`. GET publics préservés. `denormalizationContext` séparé du `normalizationContext` (groupe `xxx:write`). Validator `Assert\NotBlank` sur 1-3 champs critiques par entité. `id` + `position` exposés en lecture. Installé `symfony/expression-language` (requis par les expressions `is_granted(...)` dans `security`).
+  - **Migration** : `Version20260518150000` ajoute `active BOOLEAN NOT NULL DEFAULT TRUE` à `offer` (toggle visibilité home sans suppression). Le mockup propose un flag `active` partout — décision pragmatique V1 : seul Offer en bénéficie (modifier/supprimer suffit pour les autres entités).
+  - **Choix d'archi API** : pas de DTO Symfony séparé — entité-as-input avec groupes Serializer + Assert directement sur les propriétés (pattern standard API Platform). Réduit la duplication face à 13 entités. Documenté ; migration vers DTO si besoin (validation cross-field, payload différent du modèle).
+  - **Next — primitives admin** : `Switch`, `Tabs` (segmenté par URL), `Drawer`, `Field`/`TextField`/`TextareaField`, `ConfirmDialog`, `Toast` (`ToastProvider` + `useToast`), `EditorCard`.
+  - **Next — data layer** : `@tanstack/react-query` installé. Helper client `apiCall` qui passe par le proxy Next. Factory `makeEntityHooks<T>('xxx')` → `useList/useCreate/useUpdate/useRemove` par ressource. `extractErrorMessage` mappant les violations API Platform JSON-LD en string lisible.
+  - **Next — proxy admin** : route handler catch-all `app/api/admin/proxy/[...path]/route.ts` qui injecte le cookie httpOnly en `Authorization: Bearer …`, forwarde vers Symfony, et appelle `revalidatePath('/', 'layout')` après chaque mutation. `next.config.mjs` : rewrites `/api/*` passées en `fallback` pour que les Next route handlers (notamment dynamic `[...path]`) gagnent toujours sur le proxy.
+  - **Page `/admin/contenus`** : layout client avec 6 tabs URL-routés (`/admin/contenus/{formules,tarifs,activites,horaires,offres,bar-snack}`). `/admin/contenus` redirige vers `/formules`. Header avec bouton "Prévisualiser sur le front" (lien `/` nouvel onglet).
+  - **6 éditeurs** :
+    - `FormulesEditor` : 5 sous-groupes (hebdo/pass/resa/anniv/vip-features) avec création + édition drawer + suppression + toast. Le plus complet — sert de pattern de référence.
+    - `TarifsEditor` : tableau des TarifCard + drawer d'édition. Édition des `TarifPriceLine` individuelles différée (V2 sous-table dédiée).
+    - `ActivitesEditor` : grille des 8 ActivityPageContent + drawer d'édition texte. Upload d'image différé en PR7 (module Médias).
+    - `HorairesEditor` : 7 jours hebdomadaires éditables (texte libre dans le champ `hours`). Section Exceptions documentée comme V2 (entité dédiée à modéliser).
+    - `OffresEditor` : cards des Offer avec toggle Switch `active` → masque sans supprimer. CRUD complet.
+    - `BarSnackEditor` : arborescence Sections > Catégories > Items en lecture, édition Section et Item, suppression Item. Création d'item et édition Catégorie différées en V2 (UX imbriquée plus large).
+  - **Tests** : tests par entité non livrés en PR4 (infra fixture env test à monter — chantier séparé). Validation E2E via login + proxy + PUT/DELETE + reload public site.
+  - **Validé E2E** : `/admin/contenus/{6 tabs}` 200, GET `/api/admin/proxy/hebdo_cards` retourne les items, PUT édite, public `/tarifs-et-formules` reflète l'état courant.
+
 - **`main`** — `feat(admin,api)`: dashboard avec KPIs mockés (PR3) — 4 KPI cards + sparklines + activité + notifs + banner démo.
   - **API** : `App\Controller\Api\Admin\DashboardController` expose `GET /api/admin/dashboard` (ROLE_STAFF) avec un payload `{ meta:{demo,generatedAt}, kpis, recentActivity, notifications }`. Valeurs alignées sur `back-office-mockup/data.jsx`. Flag `meta.demo: true` jusqu'à PR5. Endpoint `POST /api/admin/notifications/mark-read` (no-op 204) ; persistance réelle en PR5.
   - **Tests** : `symfony/test-pack` installé. `DashboardControllerTest` couvre 401 sans token sur les deux endpoints (`php bin/phpunit` → vert). Le test "200 avec token" est différé : il requiert une fixture de user en env test (DB de test, JWT keys) — couverture validée via curl + dev server.

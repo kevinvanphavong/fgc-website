@@ -1,0 +1,80 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
+import { ADMIN_COOKIE } from '@/lib/admin-auth';
+
+function apiBase(): string {
+  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:8000/api';
+}
+
+/**
+ * Proxy générique vers Symfony pour les routes admin du module Contenus.
+ * - Lit le cookie `admin_token` httpOnly, l'injecte en `Authorization: Bearer …`.
+ * - Forwarde la méthode, le body, le content-type.
+ * - Après chaque mutation réussie (POST/PUT/PATCH/DELETE), revalide tout le
+ *   site public via `revalidatePath('/', 'layout')` (crude mais simple — le
+ *   site est petit, la cache est repeuplée à la prochaine visite).
+ *
+ * URL forme : /api/admin/proxy/{...path}  →  ${API_BASE}/{...path}
+ *
+ * Exemple : POST /api/admin/proxy/hebdo_cards  →  POST http://127.0.0.1:8000/api/hebdo_cards
+ */
+const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+async function handle(
+  request: NextRequest,
+  { params }: { params: { path: string[] } }
+) {
+  const token = cookies().get(ADMIN_COOKIE)?.value;
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+  }
+
+  const upstreamPath = params.path.join('/');
+  const targetUrl = new URL(`${apiBase()}/${upstreamPath}`);
+  // Forward query string
+  request.nextUrl.searchParams.forEach((v, k) => targetUrl.searchParams.set(k, v));
+
+  const isMutation = MUTATION_METHODS.has(request.method);
+  const incomingContentType = request.headers.get('content-type');
+  const body =
+    isMutation && request.method !== 'DELETE'
+      ? await request.text()
+      : undefined;
+
+  const upstream = await fetch(targetUrl.toString(), {
+    method: request.method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept:
+        request.headers.get('accept') ?? 'application/ld+json,application/json',
+      ...(incomingContentType ? { 'Content-Type': incomingContentType } : {}),
+    },
+    body,
+    cache: 'no-store',
+  });
+
+  // Revalidate the entire public site on successful mutation.
+  if (isMutation && upstream.ok) {
+    try {
+      revalidatePath('/', 'layout');
+    } catch {
+      /* revalidate ne doit pas casser la réponse */
+    }
+  }
+
+  // Stream back content + status.
+  const contentType = upstream.headers.get('content-type') ?? 'application/json';
+  const payload = await upstream.text();
+
+  return new NextResponse(payload || null, {
+    status: upstream.status,
+    headers: { 'Content-Type': contentType },
+  });
+}
+
+export const GET = handle;
+export const POST = handle;
+export const PUT = handle;
+export const PATCH = handle;
+export const DELETE = handle;

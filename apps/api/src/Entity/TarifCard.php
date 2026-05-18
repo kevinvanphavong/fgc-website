@@ -6,6 +6,10 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use Symfony\Component\Validator\Constraints as Assert;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -15,7 +19,14 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Entity]
 #[ORM\Table(name: 'tarif_card')]
 #[ApiResource(
-    operations: [new GetCollection(), new Get()],
+    operations: [
+        new GetCollection(), new Get(),
+        new GetCollection(security: "is_granted('ROLE_STAFF')"),
+        new Get(security: "is_granted('ROLE_STAFF')"),
+        new Post(security: "is_granted('ROLE_STAFF')", denormalizationContext: ['groups' => ['tarif:write']]),
+        new Put(security: "is_granted('ROLE_STAFF')", denormalizationContext: ['groups' => ['tarif:write']]),
+        new Delete(security: "is_granted('ROLE_STAFF')"),
+    ],
     normalizationContext: ['groups' => ['tarif:read']],
     order: ['position' => 'ASC'],
     paginationEnabled: false,
@@ -25,36 +36,40 @@ class TarifCard
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
+    #[Groups(['tarif:read'])]
     #[ORM\Column]
     private ?int $id = null;
 
     #[ORM\Column(length: 20)]
-    #[Groups(['tarif:read'])]
+    #[Groups(['tarif:read', 'tarif:write'])]
     private string $cardGroup = 'activites';
 
     #[ORM\Column(length: 10)]
-    #[Groups(['tarif:read'])]
+    #[Groups(['tarif:read', 'tarif:write'])]
     private string $icon = '';
 
     #[ORM\Column(length: 100)]
-    #[Groups(['tarif:read'])]
+    #[Groups(['tarif:read', 'tarif:write'])]
+    #[Assert\NotBlank]
     private string $name = '';
 
     #[ORM\Column(length: 150)]
-    #[Groups(['tarif:read'])]
+    #[Groups(['tarif:read', 'tarif:write'])]
+    #[Assert\NotBlank]
     private string $unit = '';
 
     #[ORM\Column(length: 500, nullable: true)]
-    #[Groups(['tarif:read'])]
+    #[Groups(['tarif:read', 'tarif:write'])]
     private ?string $note = null;
 
     #[ORM\Column]
+    #[Groups(['tarif:read', 'tarif:write'])]
     private int $position = 0;
 
     /** @var Collection<int, TarifPriceLine> */
     #[ORM\OneToMany(targetEntity: TarifPriceLine::class, mappedBy: 'tarifCard', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
-    #[Groups(['tarif:read'])]
+    #[Groups(['tarif:read', 'tarif:write'])]
     private Collection $prices;
 
     public function __construct()
