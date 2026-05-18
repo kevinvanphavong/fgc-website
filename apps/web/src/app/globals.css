@@ -10,35 +10,8 @@
   }
 
   body {
-    background: var(--bg-deep);
-    color: var(--cream);
-    font-family: var(--font-body), 'Inter', system-ui, sans-serif;
-    font-weight: 400;
-    line-height: 1.6;
-    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4 {
-    font-family: var(--font-display), 'Bowlby One', sans-serif;
-    font-weight: 400;
-    letter-spacing: 0.5px;
-    line-height: 1.05;
-    text-transform: uppercase;
-  }
-
-  /* Échelle responsive fluide — DS § 2.3 */
-  h1 {
-    font-size: clamp(2.4rem, 5.5vw, 4.4rem);
-  }
-  h2 {
-    font-size: clamp(1.9rem, 3.6vw, 3rem);
-  }
-  h3 {
-    font-size: clamp(1.3rem, 2vw, 1.7rem);
+    overflow-x: hidden;
   }
 
   a {
@@ -49,13 +22,89 @@
   p {
     text-wrap: pretty;
   }
+}
 
-  /* Focus visible accessible (dette comblée vs maquette d'origine) */
-  *:focus-visible {
-    outline: 2px solid var(--cyan);
-    outline-offset: 2px;
-    border-radius: 4px;
-  }
+/* ------------------------------------------------------------------
+   Public (vitrine) — scoped baseline. Le shell admin a sa propre base.
+   ------------------------------------------------------------------ */
+.fgc-public {
+  background: var(--bg-deep);
+  color: var(--cream);
+  font-family: var(--font-body), 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.fgc-public h1,
+.fgc-public h2,
+.fgc-public h3,
+.fgc-public h4 {
+  font-family: var(--font-display), 'Bowlby One', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+/* Échelle responsive fluide — DS § 2.3 */
+.fgc-public h1 {
+  font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+}
+.fgc-public h2 {
+  font-size: clamp(1.9rem, 3.6vw, 3rem);
+}
+.fgc-public h3 {
+  font-size: clamp(1.3rem, 2vw, 1.7rem);
+}
+
+/* Focus visible accessible — public uniquement (admin a son propre ring) */
+.fgc-public *:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ------------------------------------------------------------------
+   Admin shell — light theme, palette violet. Variables consommées par
+   les composants Tailwind via tokens admin-* (cf. tailwind.config.ts).
+   ------------------------------------------------------------------ */
+.admin-root {
+  background: #f5f6fa;
+  color: #0f1226;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-weight: 400;
+  line-height: 1.5;
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+.admin-root h1,
+.admin-root h2,
+.admin-root h3,
+.admin-root h4 {
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  text-transform: none;
+  color: #0f1226;
+}
+
+.admin-root h1 {
+  font-size: 1.5rem;
+}
+.admin-root h2 {
+  font-size: 1.125rem;
+}
+.admin-root h3 {
+  font-size: 1rem;
+}
+
+.admin-root *:focus-visible {
+  outline: 2px solid #5e2db8;
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 @layer components {

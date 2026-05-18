@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import { Lilita_One, Fredoka } from 'next/font/google';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import './globals.css';
 
 const lilita = Lilita_One({
@@ -42,12 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className={`${lilita.variable} ${fredoka.variable}`}>
-      <body>
-        <div className="bg-ambient" aria-hidden="true" />
-        <Header />
-        <main className="relative z-[1]">{children}</main>
-        <Footer />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

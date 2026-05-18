@@ -2,6 +2,18 @@
 
 > Un bullet par PR significative. Date | branch | scope | décisions notables.
 
+## 2026-05-18
+
+- **`main`** — `feat(admin)`: bootstrap admin shell (PR1) — route `/admin` + sidebar 3 sections + 7 pages placeholder.
+  - **Scope** : `apps/web/` uniquement. `apps/api/` non touché (la modif visible sur `DashboardController.php` est antérieure à PR1).
+  - **Routing** : pages publiques déplacées dans le route group `app/(public)/` (URLs inchangées). Root layout réduit à `<html>/<body>` + fonts ; chaque shell (public, admin) appose ses propres styles via wrapper scoppé (`.fgc-public`, `.admin-root`).
+  - **Tokens admin** : palette `admin-*` ajoutée à `tailwind.config.ts` (brand `#5E2DB8`, fond `#F5F6FA`, etc.) — séparée des tokens FGC publics.
+  - **Shell** : `AdminShell` (client) + `Sidebar` + `Topbar` dans `components/admin/shell/`. Sidebar collapsible (toggle topbar + auto-collapse <980px), breadcrumb réactif via `usePathname`. Footer sidebar hard-codé "Élise Caron / Administrateur" (branché en PR2).
+  - **Primitifs** : `Button`, `Icon` (wrapper Lucide), `Avatar`, `Badge`, `Card`/`CardHead`/`CardBody` dans `components/admin/ui/`.
+  - **Nav admin** : config dans `lib/admin-nav.ts` (7 routes, icônes Lucide, helper `findRouteByPath`).
+  - **⌘K** : raccourci et bouton wirés sur un `console.log` placeholder — implémentation PR8.
+  - **Dépendance** : ajout `lucide-react`.
+
 ## 2026-05-15
 
 - **`docs/brief-produit`** — Session de brief produit (Kévin + IA copilote) :
