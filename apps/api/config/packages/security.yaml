@@ -3,19 +3,46 @@ security:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
     providers:
-        admin_provider:
+        app_user_provider:
             entity:
-                class: App\Entity\AdminUser
+                class: App\Entity\User
                 property: email
+
+    # ROLE_ADMIN hérite de ROLE_MANAGER qui hérite de ROLE_STAFF.
+    # ROLE_STAFF = accès minimum à l'API back-office.
+    role_hierarchy:
+        ROLE_MANAGER: ROLE_STAFF
+        ROLE_ADMIN: [ROLE_MANAGER, ROLE_USER]
 
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
+        # Login JSON pour le back-office Next.js → produit un JWT via Lexik.
+        api_login:
+            pattern: ^/api/auth/login$
+            stateless: true
+            provider: app_user_provider
+            json_login:
+                check_path: /api/auth/login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+        # Reste de l'API : stateless, JWT.
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
+
+        # EasyAdmin (legacy) — supprimé en PR4. Reste fonctionnel en parallèle.
         admin:
             pattern: ^/admin
             lazy: true
-            provider: admin_provider
+            provider: app_user_provider
             form_login:
                 login_path: admin_login
                 check_path: admin_login
@@ -24,14 +51,14 @@ security:
             logout:
                 path: admin_logout
                 target: admin_login
-        api:
-            pattern: ^/api
-            stateless: true
 
     access_control:
-        - { path: ^/admin/login, roles: PUBLIC_ACCESS }
-        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth, roles: ROLE_STAFF }
+        - { path: ^/api/admin, roles: ROLE_STAFF }
         - { path: ^/api, roles: PUBLIC_ACCESS }
+        - { path: ^/admin/login, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_STAFF }
 
 when@test:
     security:

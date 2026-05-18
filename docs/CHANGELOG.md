@@ -4,6 +4,19 @@
 
 ## 2026-05-18
 
+- **`main`** — `feat(admin,api)`: auth JWT + multi-rôles (PR2) — User entity refactor + Lexik JWT + login Next.js + middleware.
+  - **API** : Lexik JWT bundle installé, paire de clés générée (gitignored), TTL 7 jours.
+  - **Entité `AdminUser` → `User`** (table renommée `admin_user` → `app_user` — `user` est réservé Postgres). Ajout `firstName`, `lastName`, `avatarColor`. Constantes `ROLE_STAFF`/`ROLE_MANAGER`/`ROLE_ADMIN`. Migration `Version20260518120000` (rename + ALTER ADD). `UserRepository` ajouté.
+  - **`security.yaml`** : provider renommé `app_user_provider`, `role_hierarchy` (ADMIN→MANAGER→STAFF), firewall `api_login` (`^/api/auth/login`, json_login → handler Lexik), firewall `api` stateless JWT, firewall `admin` (EasyAdmin legacy) **conservé** — supprimé en PR4.
+  - **`AuthController`** : `GET /api/auth/me` (ROLE_STAFF). `JwtCreatedListener` enrichit le payload JWT (uid, roles) et la réponse `/login` (`{ token, user }`).
+  - **`UserFixture`** (group `users`) : seed/backfill idempotent depuis `ADMIN_INITIAL_*` (cf. `.env.example`). Le seed précédent reste valide, la fixture remplit firstName/lastName/avatarColor si absents.
+  - **Next.js** : page `/admin/login` (form `react-hook-form` + `zod`), route handlers `/api/admin/login` + `/api/admin/logout` qui posent un cookie `admin_token` `httpOnly` `SameSite=lax` (secure en prod), TTL 7 jours alignés JWT. `lib/admin-auth.ts` expose `getCurrentUser()` mémoïsé via `react.cache`.
+  - **`middleware.ts`** (placé dans `src/`) : matcher `/admin/:path*`, redirige vers `/admin/login?next=<original>` si pas de cookie ; n'inspecte pas le JWT (validation déléguée à l'API à chaque appel).
+  - **Route groups admin** : `(shell)` pour les modules protégés (consomme `getCurrentUser()` côté server, redirige si null — double garde après middleware), `(auth)` pour `/admin/login` (rendu sans sidebar).
+  - **`AdminShell`** : prop `user`, sidebar branchée sur le user réel (avatar avec `avatarColor`, nom = firstName lastName ou email, role label dérivé). Menu compte sur le footer sidebar → action déconnexion (POST `/api/admin/logout` puis `router.push('/admin/login')`).
+  - **`next.config.mjs`** : rewrites passés en `afterFiles` pour que les route handlers `/api/admin/*` aient la priorité sur le proxy Symfony.
+  - **Validé** : E2E `/admin` (no cookie) → 307 `/admin/login?next=/admin`. `/admin/login` (déjà loggué) → 307 `/admin`. Login good creds → cookie posé + user retourné. Login bad creds → 401 message FR. `/api/auth/me` 401 sans token, 200 avec. EasyAdmin (`localhost:8000/admin`) reste fonctionnel.
+
 - **`main`** — `feat(admin)`: bootstrap admin shell (PR1) — route `/admin` + sidebar 3 sections + 7 pages placeholder.
   - **Scope** : `apps/web/` uniquement. `apps/api/` non touché (la modif visible sur `DashboardController.php` est antérieure à PR1).
   - **Routing** : pages publiques déplacées dans le route group `app/(public)/` (URLs inchangées). Root layout réduit à `<html>/<body>` + fonts ; chaque shell (public, admin) appose ses propres styles via wrapper scoppé (`.fgc-public`, `.admin-root`).

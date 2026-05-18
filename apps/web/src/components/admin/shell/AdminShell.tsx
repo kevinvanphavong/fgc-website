@@ -5,8 +5,14 @@ import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { findRouteByPath } from '@/lib/admin-nav';
+import type { AdminUser } from '@/lib/admin-auth';
 
-export default function AdminShell({ children }: { children: React.ReactNode }) {
+type AdminShellProps = {
+  user: AdminUser;
+  children: React.ReactNode;
+};
+
+export default function AdminShell({ user, children }: AdminShellProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -43,7 +49,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="admin-root flex">
-      <Sidebar activeKey={activeKey} collapsed={collapsed} />
+      <Sidebar activeKey={activeKey} collapsed={collapsed} user={user} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
           currentLabel={currentLabel}

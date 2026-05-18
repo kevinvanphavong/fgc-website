@@ -17,12 +17,18 @@ const nextConfig = {
   ...(!isGithubPages && {
     async rewrites() {
       if (process.env.NODE_ENV !== 'development') return [];
-      return [
-        {
-          source: '/api/:path*',
-          destination: `${API_BASE}/:path*`,
-        },
-      ];
+      // `afterFiles` : les route handlers Next.js (notamment /api/admin/*)
+      // ont la priorité ; tout le reste est proxifié vers Symfony.
+      return {
+        afterFiles: [
+          {
+            source: '/api/:path*',
+            destination: `${API_BASE}/:path*`,
+          },
+        ],
+        beforeFiles: [],
+        fallback: [],
+      };
     },
   }),
 };

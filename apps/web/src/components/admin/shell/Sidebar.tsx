@@ -1,18 +1,61 @@
 'use client';
 
 import Link from 'next/link';
-import { Settings } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { LogOut } from 'lucide-react';
 import { ADMIN_ROUTES, ADMIN_SECTIONS, type AdminSectionTitle } from '@/lib/admin-nav';
 import Avatar from '@/components/admin/ui/Avatar';
 import Icon from '@/components/admin/ui/Icon';
+import type { AdminUser } from '@/lib/admin-auth';
 import { cn } from '@/lib/cn';
+
+const ROLE_LABELS: Record<string, string> = {
+  ROLE_ADMIN: 'Administrateur',
+  ROLE_MANAGER: 'Manager',
+  ROLE_STAFF: 'Staff',
+};
+
+function topRoleLabel(roles: string[]): string {
+  if (roles.includes('ROLE_ADMIN')) return ROLE_LABELS.ROLE_ADMIN;
+  if (roles.includes('ROLE_MANAGER')) return ROLE_LABELS.ROLE_MANAGER;
+  return ROLE_LABELS.ROLE_STAFF;
+}
 
 type SidebarProps = {
   activeKey: string | undefined;
   collapsed: boolean;
+  user: AdminUser;
 };
 
-export default function Sidebar({ activeKey, collapsed }: SidebarProps) {
+export default function Sidebar({ activeKey, collapsed, user }: SidebarProps) {
+  const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', onClick);
+    return () => window.removeEventListener('mousedown', onClick);
+  }, [menuOpen]);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await fetch('/api/admin/logout', { method: 'POST' });
+    router.push('/admin/login');
+    router.refresh();
+  };
+
+  const displayName = user.firstName
+    ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`
+    : user.email;
+  const role = topRoleLabel(user.roles);
   const sections = ADMIN_SECTIONS.map((title) => ({
     title,
     items: ADMIN_ROUTES.filter((r) => r.section === title),
@@ -108,33 +151,62 @@ export default function Sidebar({ activeKey, collapsed }: SidebarProps) {
         ))}
       </nav>
 
-      {/* Foot — user pinned (hard-coded en PR1, branché en PR2) */}
+      {/* Foot — user réel (issu du JWT via getCurrentUser côté server) */}
       <div
+        ref={menuRef}
         className={cn(
-          'flex items-center gap-2.5 border-t border-admin-border-soft px-3 py-3',
+          'relative flex items-center gap-2.5 border-t border-admin-border-soft px-3 py-3',
           collapsed && 'justify-center px-0'
         )}
       >
-        <Avatar name="Élise Caron" size="sm" />
-        {!collapsed ? (
-          <>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((o) => !o)}
+          className={cn(
+            'flex flex-1 items-center gap-2.5 rounded-md p-1 text-left transition-colors hover:bg-admin-bg-sunken',
+            collapsed && 'flex-none justify-center'
+          )}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          title={collapsed ? `${displayName} · ${role}` : 'Menu compte'}
+        >
+          <Avatar
+            name={displayName}
+            size="sm"
+            gradient={user.avatarColor ?? undefined}
+          />
+          {!collapsed ? (
             <div className="min-w-0 flex-1 leading-tight">
               <div className="truncate text-[0.8125rem] font-semibold text-admin-text">
-                Élise Caron
+                {displayName}
               </div>
               <div className="truncate text-[0.6875rem] text-admin-text-muted">
-                Administrateur
+                {role}
               </div>
             </div>
+          ) : null}
+        </button>
+
+        {menuOpen ? (
+          <div
+            role="menu"
+            className="absolute bottom-full left-3 right-3 mb-2 overflow-hidden rounded-md border border-admin-border bg-admin-bg-elev shadow-lg"
+          >
             <button
               type="button"
-              className="rounded-md p-1.5 text-admin-text-muted hover:bg-admin-bg-sunken hover:text-admin-text"
-              aria-label="Réglages compte"
-              title="Réglages compte"
+              role="menuitem"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.8125rem] text-admin-text transition-colors hover:bg-admin-bg-sunken disabled:opacity-60"
             >
-              <Icon icon={Settings} size={16} />
+              <Icon
+                icon={LogOut}
+                size={15}
+                className="text-admin-text-muted"
+              />
+              {loggingOut ? 'Déconnexion…' : 'Se déconnecter'}
             </button>
-          </>
+          </div>
         ) : null}
       </div>
     </aside>
