@@ -4,6 +4,20 @@
 
 ## 2026-05-18
 
+- **`main`** — `feat(admin,api)`: dashboard avec KPIs mockés (PR3) — 4 KPI cards + sparklines + activité + notifs + banner démo.
+  - **API** : `App\Controller\Api\Admin\DashboardController` expose `GET /api/admin/dashboard` (ROLE_STAFF) avec un payload `{ meta:{demo,generatedAt}, kpis, recentActivity, notifications }`. Valeurs alignées sur `back-office-mockup/data.jsx`. Flag `meta.demo: true` jusqu'à PR5. Endpoint `POST /api/admin/notifications/mark-read` (no-op 204) ; persistance réelle en PR5.
+  - **Tests** : `symfony/test-pack` installé. `DashboardControllerTest` couvre 401 sans token sur les deux endpoints (`php bin/phpunit` → vert). Le test "200 avec token" est différé : il requiert une fixture de user en env test (DB de test, JWT keys) — couverture validée via curl + dev server.
+  - **Next.js — lib** : `lib/admin-api.ts` (helper `adminFetch` qui propage le cookie en Bearer et redirige sur 401, `getDashboard` mémoïsé via `react.cache`, typings `DashboardPayload`). `lib/intl.ts` (formatters `currencyEUR`, `percent`, `formatRelative` basé sur `Intl.RelativeTimeFormat`).
+  - **Composants admin** :
+    - `components/admin/dashboard/Sparkline` : SVG natif `<polyline>` (pas de Chart.js).
+    - `KpiCard` (RSC) + `KpiCardSkeleton`. 4 accents (`brand` `green` `amber` `pink`) — couleur sparkline + bg icône issus des tokens admin-*. Trend up/down/flat avec couleur (vert/rouge/muted).
+    - `RecentActivity` (RSC) avec icône par type (reservation/payment/user/system) + timestamp relatif FR.
+    - `DemoBanner` (client) dismissible via `sessionStorage` — re-affiché à chaque session navigateur.
+    - `RefreshButton` (client) → `router.refresh()`.
+  - **Page `/admin`** : layout grid 1/2/4 colonnes (mobile/tablette/desktop), KPIs en haut, activité récente en bas. Suspense skeleton pendant le SSR fetch. `dynamic = 'force-dynamic'`.
+  - **Topbar** : popover notifications branché sur les notifs du dashboard payload (consommées via `getNotifications()` au layout shell, déduplique le fetch grâce à `react.cache`). Dot rouge si au moins une `unread:true`. "Tout marquer comme lu" → POST `/api/admin/notifications/mark-read` (route handler Next qui proxify vers Symfony) + `router.refresh()`. Plus de hard-coded notifs.
+  - **Validé E2E** : `/admin` retourne 200 avec KPIs, activité, "Bonjour Kévin", refresh button. POST notifs mark-read → 204. EasyAdmin reste OK.
+
 - **`main`** — `feat(admin,api)`: auth JWT + multi-rôles (PR2) — User entity refactor + Lexik JWT + login Next.js + middleware.
   - **API** : Lexik JWT bundle installé, paire de clés générée (gitignored), TTL 7 jours.
   - **Entité `AdminUser` → `User`** (table renommée `admin_user` → `app_user` — `user` est réservé Postgres). Ajout `firstName`, `lastName`, `avatarColor`. Constantes `ROLE_STAFF`/`ROLE_MANAGER`/`ROLE_ADMIN`. Migration `Version20260518120000` (rename + ALTER ADD). `UserRepository` ajouté.

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import AdminShell from '@/components/admin/shell/AdminShell';
 import { getCurrentUser } from '@/lib/admin-auth';
+import { getNotifications } from '@/lib/admin-api';
 
 export const metadata: Metadata = {
   title: {
@@ -23,5 +24,11 @@ export default async function AdminLayout({
     redirect('/admin/login');
   }
 
-  return <AdminShell user={user}>{children}</AdminShell>;
+  const notifications = await getNotifications();
+
+  return (
+    <AdminShell user={user} notifications={notifications}>
+      {children}
+    </AdminShell>
+  );
 }

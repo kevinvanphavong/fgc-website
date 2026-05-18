@@ -6,13 +6,19 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { findRouteByPath } from '@/lib/admin-nav';
 import type { AdminUser } from '@/lib/admin-auth';
+import type { DashboardNotification } from '@/lib/admin-api';
 
 type AdminShellProps = {
   user: AdminUser;
+  notifications: DashboardNotification[];
   children: React.ReactNode;
 };
 
-export default function AdminShell({ user, children }: AdminShellProps) {
+export default function AdminShell({
+  user,
+  notifications,
+  children,
+}: AdminShellProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -53,6 +59,7 @@ export default function AdminShell({ user, children }: AdminShellProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
           currentLabel={currentLabel}
+          notifications={notifications}
           onToggleSidebar={() => setCollapsed((c) => !c)}
           onOpenCmdK={openCmdK}
         />
