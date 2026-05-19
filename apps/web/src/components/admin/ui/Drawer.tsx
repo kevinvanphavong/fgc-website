@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import Icon from './Icon';
 import { cn } from '@/lib/cn';
@@ -15,6 +15,9 @@ type DrawerProps = {
   children: ReactNode;
 };
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export default function Drawer({
   open,
   onClose,
@@ -24,10 +27,58 @@ export default function Drawer({
   width = 480,
   children,
 }: DrawerProps) {
+  const drawerRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  // Mémorise l'élément actif avant ouverture, restitue le focus au close (PR8 a11y).
+  useEffect(() => {
+    if (!open) return;
+    triggerRef.current = (document.activeElement as HTMLElement | null) ?? null;
+    // Focus initial sur le premier focusable du drawer après le tick.
+    const t = setTimeout(() => {
+      const node = drawerRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+      node?.focus();
+    }, 50);
+    return () => {
+      clearTimeout(t);
+      // Restitution focus au déclencheur si toujours dans le DOM.
+      if (triggerRef.current && document.contains(triggerRef.current)) {
+        try {
+          triggerRef.current.focus();
+        } catch {
+          /* perdu, on accepte */
+        }
+      }
+    };
+  }, [open]);
+
+  // Esc ferme + focus trap au Tab.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const root = drawerRef.current;
+      if (!root) return;
+      const focusable = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+        .filter((el) => !el.hasAttribute('disabled') && el.tabIndex !== -1);
+      if (focusable.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && (active === first || !root.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -44,10 +95,12 @@ export default function Drawer({
         aria-hidden="true"
       />
       <aside
+        ref={drawerRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        style={{ width }}
+        style={{ width: `min(${width}px, 100vw)` }}
+        data-admin-anim="drawer"
         className={cn(
           'fixed right-0 top-0 z-50 flex h-screen flex-col border-l border-admin-border bg-admin-bg-elev shadow-2xl transition-transform duration-200',
           open ? 'translate-x-0' : 'translate-x-full'
@@ -66,7 +119,7 @@ export default function Drawer({
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="rounded-md p-1 text-admin-text-muted hover:bg-admin-bg-sunken hover:text-admin-text"
+            className="rounded-md p-1 text-admin-text-muted hover:bg-admin-bg-sunken hover:text-admin-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-brand-ring"
           >
             <Icon icon={X} size={16} />
           </button>

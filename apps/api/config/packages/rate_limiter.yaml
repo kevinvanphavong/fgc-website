@@ -1,0 +1,31 @@
+framework:
+    rate_limiter:
+        # Tunnel anniv — POST création résa : 5/min/IP.
+        anniv_post:
+            policy: 'fixed_window'
+            limit: 5
+            interval: '1 minute'
+        # Tunnel anniv — GET availability : 30/min/IP (le calendrier
+        # peut faire plusieurs requêtes au scroll mois).
+        anniv_availability:
+            policy: 'fixed_window'
+            limit: 30
+            interval: '1 minute'
+        # Formulaire B2B — POST devis : 3/min/IP.
+        b2b_devis_post:
+            policy: 'fixed_window'
+            limit: 3
+            interval: '1 minute'
+
+# En test, on désactive les limites (plafond élevé) — sinon la suite full
+# tombe en 429 dès le 6e POST anniv. La logique métier (validation, conflit)
+# reste testée à pleine couverture, seul le throttling est neutralisé.
+when@test:
+    framework:
+        rate_limiter:
+            anniv_post:
+                limit: 1000
+            anniv_availability:
+                limit: 1000
+            b2b_devis_post:
+                limit: 1000

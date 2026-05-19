@@ -1,6 +1,8 @@
 # CLAUDE.md — Instructions Claude Code · Site FGC 2026/2027
 
 > **Lis ce fichier en premier, avant toute autre chose.** Il définit le contexte, les règles, la stack et l'ordre de travail pour ce repo.
+>
+> **Lis aussi `docs/GOTCHAS.md`** au début de chaque session : c'est le journal des pièges techniques déjà rencontrés sur ce repo. Si tu retombes sur un nouveau piège en cours de PR, **ajoute-le en fin de PR** (format documenté dans le fichier).
 
 ---
 

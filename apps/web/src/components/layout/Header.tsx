@@ -142,24 +142,36 @@ export default function Header() {
             )
           )}
 
-          {/* CTA mobile */}
+          {/* CTAs mobile */}
+          <Link
+            href="/reserver-anniversaire"
+            className="mt-4 inline-flex items-center justify-center gap-2.5 rounded-full border-2 border-fgc-pink-shadow bg-fgc-pink-hot px-5 py-3 font-display text-[0.92rem] uppercase text-white shadow-fgc-btn-pink transition-transform hover:-translate-y-0.5 active:translate-y-px md:hidden"
+          >
+            🎉 Réserver un anniv
+          </Link>
           <a
             href={RESERVATION_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center justify-center gap-2.5 rounded-full border-2 border-fgc-yellow-shadow bg-fgc-yellow px-6 py-3.5 font-display text-[1rem] uppercase text-fgc-purple shadow-fgc-btn-yellow transition-transform hover:-translate-y-0.5 active:translate-y-px md:hidden"
+            className="mt-2 inline-flex items-center justify-center gap-2.5 rounded-full border-2 border-fgc-yellow-shadow bg-fgc-yellow px-5 py-3 font-display text-[0.92rem] uppercase text-fgc-purple shadow-fgc-btn-yellow transition-transform hover:-translate-y-0.5 active:translate-y-px md:hidden"
           >
-            Réserver
+            Réserver une partie
           </a>
         </nav>
 
         {/* CTA desktop + burger */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/reserver-anniversaire"
+            className="hidden items-center gap-2 rounded-full border-2 border-fgc-pink-shadow bg-fgc-pink-hot px-4 py-3 font-display text-[0.92rem] uppercase text-white shadow-fgc-btn-pink transition-transform hover:-translate-y-0.5 active:translate-y-px md:inline-flex"
+          >
+            🎉 Anniv
+          </Link>
           <a
             href={RESERVATION_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden items-center gap-2.5 rounded-full border-2 border-fgc-yellow-shadow bg-fgc-yellow px-6 py-3.5 font-display text-[1rem] uppercase text-fgc-purple shadow-fgc-btn-yellow transition-transform hover:-translate-y-0.5 active:translate-y-px md:inline-flex"
+            className="hidden items-center gap-2.5 rounded-full border-2 border-fgc-yellow-shadow bg-fgc-yellow px-5 py-3 font-display text-[0.92rem] uppercase text-fgc-purple shadow-fgc-btn-yellow transition-transform hover:-translate-y-0.5 active:translate-y-px md:inline-flex"
           >
             Réserver
           </a>

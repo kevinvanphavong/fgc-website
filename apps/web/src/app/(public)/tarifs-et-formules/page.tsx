@@ -519,6 +519,14 @@ export default async function TarifsEtFormulesPage() {
                     </li>
                   ))}
                 </ul>
+
+                <Button
+                  href={`/reserver-anniversaire?formule=${card.key}`}
+                  variant={card.featured ? 'primary' : 'ghost'}
+                  className="mt-auto justify-center"
+                >
+                  Réserver {card.name}
+                </Button>
               </article>
             ))}
           </div>
@@ -544,8 +552,8 @@ export default async function TarifsEtFormulesPage() {
           </div>
 
           <div className="mt-8 text-center">
-            <Button href="/contact" variant="pink">
-              Réserver un anniversaire
+            <Button href="/reserver-anniversaire" variant="pink">
+              🎉 Réserver un anniversaire
             </Button>
           </div>
         </div>

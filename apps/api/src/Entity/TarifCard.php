@@ -20,7 +20,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Table(name: 'tarif_card')]
 #[ApiResource(
     operations: [
-        new GetCollection(), new Get(),
+        new GetCollection(uriTemplate: '/formules/tarifs'),
+        new Get(uriTemplate: '/formules/tarifs/{id}', uriVariables: ['id']),
         new GetCollection(security: "is_granted('ROLE_STAFF')"),
         new Get(security: "is_granted('ROLE_STAFF')"),
         new Post(security: "is_granted('ROLE_STAFF')", denormalizationContext: ['groups' => ['tarif:write']]),

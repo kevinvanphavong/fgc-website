@@ -9,6 +9,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'app_user')]
+#[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public const ROLE_STAFF = 'ROLE_STAFF';
@@ -40,6 +41,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 120, nullable: true)]
     private ?string $avatarColor = null;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $enabled = true;
+
+    /** Token réinitialisation mot de passe — invité OU oubli (V2). */
+    #[ORM\Column(length: 64, nullable: true, unique: true)]
+    private ?string $resetToken = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $resetTokenExpiresAt = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $lastLoginAt = null;
+
+    #[ORM\Column(type: 'datetime_immutable')]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\PrePersist]
+    public function onPrePersist(): void
+    {
+        $this->createdAt ??= new \DateTimeImmutable();
+    }
+
     public function getId(): ?int { return $this->id; }
 
     public function getEmail(): string { return $this->email; }
@@ -52,6 +75,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $roles = $this->roles;
         $roles[] = 'ROLE_USER';
         return array_values(array_unique($roles));
+    }
+
+    /** @return list<string> Rôles bruts (sans ROLE_USER ajouté). */
+    public function getRawRoles(): array
+    {
+        return $this->roles;
     }
 
     public function setRoles(array $v): static { $this->roles = array_values($v); return $this; }
@@ -67,6 +96,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getAvatarColor(): ?string { return $this->avatarColor; }
     public function setAvatarColor(?string $v): static { $this->avatarColor = $v; return $this; }
+
+    public function isEnabled(): bool { return $this->enabled; }
+    public function setEnabled(bool $v): static { $this->enabled = $v; return $this; }
+
+    public function getResetToken(): ?string { return $this->resetToken; }
+    public function setResetToken(?string $v): static { $this->resetToken = $v; return $this; }
+
+    public function getResetTokenExpiresAt(): ?\DateTimeImmutable { return $this->resetTokenExpiresAt; }
+    public function setResetTokenExpiresAt(?\DateTimeImmutable $v): static { $this->resetTokenExpiresAt = $v; return $this; }
+
+    public function isResetTokenValid(): bool
+    {
+        return $this->resetToken !== null
+            && $this->resetTokenExpiresAt instanceof \DateTimeImmutable
+            && $this->resetTokenExpiresAt > new \DateTimeImmutable();
+    }
+
+    public function getLastLoginAt(): ?\DateTimeImmutable { return $this->lastLoginAt; }
+    public function setLastLoginAt(?\DateTimeImmutable $v): static { $this->lastLoginAt = $v; return $this; }
+
+    public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
 
     public function getFullName(): string
     {

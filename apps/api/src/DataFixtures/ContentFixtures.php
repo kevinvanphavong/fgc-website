@@ -227,10 +227,49 @@ class ContentFixtures extends Fixture
 
     private function loadAnniv(ObjectManager $m): void
     {
+        // Source : maquette `data.jsx` (FORMULES). Le `price` string sert à
+        // l'affichage public, `unitPriceCents` au calcul tunnel (total fête).
         $cards = [
-            ['key' => 'newbowler', 'icon' => '🎳', 'name' => 'New Bowler', 'age' => '6 à 8 ans', 'price' => '18,50€/enfant', 'features' => ['1 partie de bowling + chaussures', '1 jeton arcade par enfant', "Goûter d'anniversaire complet", 'Service VIP anniversaire inclus'], 'featured' => false],
-            ['key' => 'superbowler', 'icon' => '🏆', 'name' => 'Super Bowler', 'age' => '8 à 10 ans', 'price' => '22,50€/enfant', 'features' => ['2 parties de bowling + chaussures', '2 jetons arcade par enfant', "Goûter d'anniversaire complet", 'Service VIP anniversaire inclus'], 'featured' => true],
-            ['key' => 'probowler', 'icon' => '💎', 'name' => 'Pro Bowler', 'age' => '10 à 12 ans', 'price' => '26,50€/enfant', 'features' => ['2 parties de bowling + chaussures', '2 jetons arcade par enfant', '1 session de réalité virtuelle', "Goûter d'anniversaire complet", 'Service VIP anniversaire inclus'], 'featured' => false],
+            [
+                'key' => 'newbowler', 'icon' => '🎳', 'name' => 'New Bowler',
+                'age' => '6 à 8 ans', 'price' => '18,50€/enfant', 'unitPriceCents' => 1850,
+                'minKids' => 6, 'duration' => '2h',
+                'tagline' => 'La première fête de bowling — taillée pour les plus jeunes',
+                'features' => [
+                    '1 partie de bowling + chaussures',
+                    '1 jeton arcade par enfant',
+                    "Goûter d'anniversaire complet",
+                    'Service VIP anniversaire inclus',
+                ],
+                'featured' => false,
+            ],
+            [
+                'key' => 'superbowler', 'icon' => '🏆', 'name' => 'Super Bowler',
+                'age' => '8 à 10 ans', 'price' => '22,50€/enfant', 'unitPriceCents' => 2250,
+                'minKids' => 6, 'duration' => '2h30',
+                'tagline' => 'La formule la plus demandée — plus de jeu, plus de fun',
+                'features' => [
+                    '2 parties de bowling + chaussures',
+                    '2 jetons arcade par enfant',
+                    "Goûter d'anniversaire complet",
+                    'Service VIP anniversaire inclus',
+                ],
+                'featured' => true,
+            ],
+            [
+                'key' => 'probowler', 'icon' => '💎', 'name' => 'Pro Bowler',
+                'age' => '10 à 12 ans', 'price' => '26,50€/enfant', 'unitPriceCents' => 2650,
+                'minKids' => 6, 'duration' => '3h',
+                'tagline' => "L'expérience ultime — bowling, arcade et VR",
+                'features' => [
+                    '2 parties de bowling + chaussures',
+                    '2 jetons arcade par enfant',
+                    '1 session de réalité virtuelle',
+                    "Goûter d'anniversaire complet",
+                    'Service VIP anniversaire inclus',
+                ],
+                'featured' => false,
+            ],
         ];
 
         foreach ($cards as $pos => $d) {
@@ -240,6 +279,10 @@ class ContentFixtures extends Fixture
             $card->setName($d['name']);
             $card->setAge($d['age']);
             $card->setPrice($d['price']);
+            $card->setUnitPriceCents($d['unitPriceCents']);
+            $card->setMinKids($d['minKids']);
+            $card->setDuration($d['duration']);
+            $card->setTagline($d['tagline']);
             $card->setFeatures($d['features']);
             $card->setFeatured($d['featured']);
             $card->setPosition($pos);

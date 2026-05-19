@@ -47,6 +47,9 @@ class TarifPriceLine
     #[Groups(['tarif:read', 'tarif:write'])]
     private int $position = 0;
 
+    // tarifCard : non exposé en API. Le TarifPriceLine s'édite via la
+    // collection `prices` de TarifCard (cascade persist).
+    // Cf. note sur MenuCategory::section.
     #[ORM\ManyToOne(targetEntity: TarifCard::class, inversedBy: 'prices')]
     #[ORM\JoinColumn(nullable: false)]
     private ?TarifCard $tarifCard = null;

@@ -22,7 +22,6 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Post(security: "is_granted('ROLE_STAFF')", denormalizationContext: ['groups' => ['activity:write']]),
         new Put(security: "is_granted('ROLE_STAFF')", denormalizationContext: ['groups' => ['activity:write']]),
         new Delete(security: "is_granted('ROLE_STAFF')"),
-    ]),
     ],
     normalizationContext: ['groups' => ['activity:read']],
     order: ['slug' => 'ASC'],

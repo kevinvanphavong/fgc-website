@@ -25,3 +25,9 @@ next-env.d.ts
 
 # Vercel
 .vercel
+
+# Médias uploadés via le back-office (PR7) — restent locaux, jamais commités.
+/apps/api/public/uploads/
+
+# Worktrees Claude Code (sessions transverses, pas du code source du projet)
+.claude/worktrees/

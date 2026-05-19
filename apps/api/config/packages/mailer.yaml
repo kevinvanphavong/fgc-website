@@ -1,0 +1,17 @@
+framework:
+    mailer:
+        dsn: '%env(MAILER_DSN)%'
+
+# Variables consommées par BirthdayReservationMailer + futures notifs.
+# Override via .env.local / vars CI (cf. .env.example).
+parameters:
+    # Valeurs de repli dev — référencées par le `default:` ci-dessous.
+    mailer_default_from: 'contact@familygamescenter.fr'
+    mailer_default_from_name: 'Family Games Center'
+    mailer_default_reservations: 'contact@familygamescenter.fr'
+    admin_setup_url_default: 'http://localhost:3000/admin/setup-password'
+
+    # `default:<param>:<ENV>` → utilise le param ci-dessus si l'env est absente.
+    mailer.from_address: '%env(default:mailer_default_from:MAILER_FROM)%'
+    mailer.from_name: '%env(default:mailer_default_from_name:MAILER_FROM_NAME)%'
+    mailer.reservations_to: '%env(default:mailer_default_reservations:RESERVATIONS_NOTIFY_TO)%'

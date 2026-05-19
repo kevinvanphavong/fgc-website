@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
-import AdminProviders from '@/components/admin/AdminProviders';
 import Tabs, { type TabItem } from '@/components/admin/ui/Tabs';
 import AdminButton from '@/components/admin/ui/Button';
 import Icon from '@/components/admin/ui/Icon';
@@ -19,7 +18,7 @@ const TABS: TabItem[] = [
 
 export default function ContenusLayout({ children }: { children: ReactNode }) {
   return (
-    <AdminProviders>
+    <>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-[1.5rem] font-semibold text-admin-text">
@@ -48,6 +47,6 @@ export default function ContenusLayout({ children }: { children: ReactNode }) {
       </div>
 
       {children}
-    </AdminProviders>
+    </>
   );
 }

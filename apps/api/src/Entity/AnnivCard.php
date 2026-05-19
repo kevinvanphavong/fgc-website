@@ -57,6 +57,29 @@ class AnnivCard
     #[Assert\NotBlank]
     private string $price = '';
 
+    /**
+     * Prix unitaire en centimes (par enfant invité) — utilisé par le
+     * tunnel de réservation pour calculer le total fête. Le champ `price`
+     * string reste pour l'affichage public/admin.
+     */
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    #[Groups(['formule:read', 'formule:write'])]
+    #[Assert\PositiveOrZero]
+    private int $unitPriceCents = 0;
+
+    #[ORM\Column(type: 'integer', options: ['default' => 6])]
+    #[Groups(['formule:read', 'formule:write'])]
+    #[Assert\PositiveOrZero]
+    private int $minKids = 6;
+
+    #[ORM\Column(length: 20, options: ['default' => ''])]
+    #[Groups(['formule:read', 'formule:write'])]
+    private string $duration = '';
+
+    #[ORM\Column(length: 200, options: ['default' => ''])]
+    #[Groups(['formule:read', 'formule:write'])]
+    private string $tagline = '';
+
     #[ORM\Column(type: 'json')]
     #[Groups(['formule:read', 'formule:write'])]
     private array $features = [];
@@ -80,6 +103,14 @@ class AnnivCard
     public function setAge(string $v): static { $this->age = $v; return $this; }
     public function getPrice(): string { return $this->price; }
     public function setPrice(string $v): static { $this->price = $v; return $this; }
+    public function getUnitPriceCents(): int { return $this->unitPriceCents; }
+    public function setUnitPriceCents(int $v): static { $this->unitPriceCents = $v; return $this; }
+    public function getMinKids(): int { return $this->minKids; }
+    public function setMinKids(int $v): static { $this->minKids = $v; return $this; }
+    public function getDuration(): string { return $this->duration; }
+    public function setDuration(string $v): static { $this->duration = $v; return $this; }
+    public function getTagline(): string { return $this->tagline; }
+    public function setTagline(string $v): static { $this->tagline = $v; return $this; }
     public function getFeatures(): array { return $this->features; }
     public function setFeatures(array $v): static { $this->features = $v; return $this; }
     public function isFeatured(): bool { return $this->featured; }

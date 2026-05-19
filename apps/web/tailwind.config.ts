@@ -34,6 +34,11 @@ const config: Config = {
           'cream-warm': '#f8edd8',
           cyan: '#00e5ff',
           magenta: '#ff00c8',
+          // Formules anniv (cf. maquette reservation/data.jsx FORMULES.color)
+          // — newbowler "silver" pour la formule découverte. Super/Pro
+          // réutilisent yellow / pink-hot ci-dessus.
+          'silver-formule': '#c9d1d9',
+          'silver-formule-dark': '#7a8493',
         },
         admin: {
           brand: '#5E2DB8',

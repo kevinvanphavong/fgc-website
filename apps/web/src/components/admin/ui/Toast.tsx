@@ -50,9 +50,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       <div
         role="region"
         aria-label="Notifications"
-        className="pointer-events-none fixed bottom-5 right-5 z-[100] flex w-[340px] flex-col gap-2"
+        className="pointer-events-none fixed bottom-5 right-5 z-[100] flex w-[340px] flex-col gap-2 max-md:bottom-3 max-md:right-3 max-md:left-3 max-md:w-auto"
       >
-        {toasts.map((t) => {
+        {/* Stack max 3 visibles — PR8 (au-delà = scrollable). */}
+        {toasts.slice(-3).map((t) => {
           const meta = KIND_META[t.kind];
           return (
             <div

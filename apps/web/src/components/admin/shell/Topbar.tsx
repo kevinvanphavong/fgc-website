@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PanelLeft, Search, HelpCircle, Bell } from 'lucide-react';
+import { PanelLeft, Search, HelpCircle, Bell, Menu } from 'lucide-react';
 import Icon from '@/components/admin/ui/Icon';
 import { formatRelative } from '@/lib/intl';
 import type { DashboardNotification } from '@/lib/admin-api';
@@ -13,6 +13,7 @@ type TopbarProps = {
   notifications: DashboardNotification[];
   onToggleSidebar: () => void;
   onOpenCmdK: () => void;
+  onOpenHelp?: () => void;
 };
 
 export default function Topbar({
@@ -20,6 +21,7 @@ export default function Topbar({
   notifications,
   onToggleSidebar,
   onOpenCmdK,
+  onOpenHelp,
 }: TopbarProps) {
   const router = useRouter();
   const [notifsOpen, setNotifsOpen] = useState(false);
@@ -60,11 +62,12 @@ export default function Topbar({
       <button
         type="button"
         onClick={onToggleSidebar}
-        className="rounded-md p-1.5 text-admin-text-muted hover:bg-admin-bg-sunken hover:text-admin-text"
+        className="rounded-md p-1.5 text-admin-text-muted hover:bg-admin-bg-sunken hover:text-admin-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-brand-ring"
         title="Replier la barre latérale"
-        aria-label="Replier la barre latérale"
+        aria-label="Replier ou déplier la barre latérale"
       >
-        <Icon icon={PanelLeft} size={17} />
+        <Icon icon={PanelLeft} size={17} className="max-md:hidden" />
+        <Icon icon={Menu} size={17} className="md:hidden" />
       </button>
 
       <nav
@@ -101,9 +104,10 @@ export default function Topbar({
 
       <button
         type="button"
-        className="rounded-md p-1.5 text-admin-text-muted hover:bg-admin-bg-sunken hover:text-admin-text"
-        title="Aide"
-        aria-label="Aide"
+        onClick={onOpenHelp}
+        className="rounded-md p-1.5 text-admin-text-muted hover:bg-admin-bg-sunken hover:text-admin-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-brand-ring"
+        title="Raccourcis clavier ( ? )"
+        aria-label="Voir la liste des raccourcis clavier"
       >
         <Icon icon={HelpCircle} size={17} />
       </button>

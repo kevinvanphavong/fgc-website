@@ -1,13 +1,8 @@
-import ComingSoon from '@/components/admin/ComingSoon';
+import type { Metadata } from 'next';
+import ReservationsClient from '@/components/admin/reservations/ReservationsClient';
 
-export const metadata = { title: 'Réservations B2C' };
+export const metadata: Metadata = { title: 'Réservations anniv' };
 
 export default function AdminReservationsPage() {
-  return (
-    <ComingSoon
-      title="Réservations B2C"
-      subtitle="Calendrier, pipeline, gestion des conflits, drawer de détail."
-      pr="PR5 — feat/admin-reservations"
-    />
-  );
+  return <ReservationsClient />;
 }

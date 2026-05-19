@@ -37,12 +37,21 @@ async function handle(
 
   const isMutation = MUTATION_METHODS.has(request.method);
   const incomingContentType = request.headers.get('content-type');
-  const body =
-    isMutation && request.method !== 'DELETE'
-      ? await request.text()
-      : undefined;
+  const isMultipart = incomingContentType?.startsWith('multipart/form-data') ?? false;
 
-  const upstream = await fetch(targetUrl.toString(), {
+  // Multipart (upload média PR7) : on forwarde le body brut en stream — sinon
+  // les boundaries multipart sont perdues si on passe par .text(). Pour le reste
+  // (JSON), .text() reste plus lisible en debug.
+  let body: BodyInit | undefined;
+  if (isMutation && request.method !== 'DELETE') {
+    if (isMultipart) {
+      body = request.body as unknown as BodyInit;
+    } else {
+      body = await request.text();
+    }
+  }
+
+  const fetchInit: RequestInit & { duplex?: 'half' } = {
     method: request.method,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -52,7 +61,12 @@ async function handle(
     },
     body,
     cache: 'no-store',
-  });
+  };
+  if (isMultipart) {
+    fetchInit.duplex = 'half'; // requis quand `body` est un ReadableStream
+  }
+
+  const upstream = await fetch(targetUrl.toString(), fetchInit);
 
   // Revalidate the entire public site on successful mutation.
   if (isMutation && upstream.ok) {

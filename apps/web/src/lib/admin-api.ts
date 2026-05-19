@@ -98,6 +98,7 @@ export type DashboardPayload = {
     reservationsToday: DashboardKpi;
     occupancyRate: DashboardKpi;
     revenueMonth: DashboardKpi;
+    b2bPipeline: DashboardKpi;
   };
   recentActivity: DashboardActivity[];
   notifications: DashboardNotification[];

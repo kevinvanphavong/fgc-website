@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#
+# Lance la suite PHPUnit de l'API.
+# Le bootstrap (tests/bootstrap.php) drop+recreate+seed la DB de test
+# automatiquement, sauf si FGC_TEST_DB_SKIP_SETUP=1 est posé.
+#
+# Usage :
+#   bin/test-api                          # toute la suite
+#   bin/test-api tests/Api/Entity/HebdoCardTest.php   # un fichier
+#   FGC_TEST_DB_SKIP_SETUP=1 bin/test-api # skip drop+seed (DB déjà fraîche)
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+exec vendor/bin/phpunit "$@"

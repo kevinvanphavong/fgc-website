@@ -13,7 +13,8 @@ const ADMIN_COOKIE = 'admin_token';
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  if (pathname === '/admin/login') {
+  // Routes auth publiques (login + setup mot de passe via lien d'invitation).
+  if (pathname === '/admin/login' || pathname === '/admin/setup-password') {
     return NextResponse.next();
   }
 

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Votre demande de réservation — {{ reservation.reference }}</title>
+</head>
+<body style="margin:0;padding:24px;background:#160a3a;color:#fff4e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:24px;">
+            <div style="font-size:48px;line-height:1;">🎉</div>
+            <h1 style="font-size:26px;margin:12px 0 4px;color:#ffd93d;">Demande enregistrée</h1>
+            <p style="margin:0;opacity:.9;">Merci {{ reservation.parentFirstName }} !<br>
+                On vous rappelle sous 24h pour confirmer la date.</p>
+        </div>
+
+        <div style="background:#3d1b6b;border-radius:18px;padding:28px;margin-bottom:18px;">
+            <div style="background:#ffd93d;color:#160a3a;padding:14px 18px;border-radius:12px;text-align:center;margin-bottom:20px;">
+                <div style="font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:600;">Votre référence</div>
+                <div style="font-size:24px;font-weight:800;margin-top:2px;letter-spacing:.05em;">{{ reservation.reference }}</div>
+            </div>
+
+            <div style="display:block;">
+                <p style="margin:8px 0;"><strong style="color:#ffd93d;">Formule :</strong> {{ formule.icon }} {{ formule.name }} · {{ formule.duration }}</p>
+                <p style="margin:8px 0;"><strong style="color:#ffd93d;">Date souhaitée :</strong> {{ reservation.eventDate|date('l d/m/Y') }}</p>
+                <p style="margin:8px 0;"><strong style="color:#ffd93d;">Créneau :</strong> {{ reservation.timeSlot }}</p>
+                <p style="margin:8px 0;"><strong style="color:#ffd93d;">Pour :</strong> {{ reservation.childName }} ({{ reservation.childAge }} ans), avec {{ reservation.kidsCount }} enfants</p>
+                <p style="margin:8px 0;"><strong style="color:#ffd93d;">Total estimé :</strong> {{ (totalCents / 100)|number_format(2, ',', ' ') }} €</p>
+            </div>
+        </div>
+
+        <div style="background:#3d1b6b;border-radius:18px;padding:24px;margin-bottom:18px;">
+            <h2 style="font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:#ff2d87;margin:0 0 14px;">Et maintenant ?</h2>
+            <ul style="padding-left:18px;margin:0;line-height:1.7;">
+                <li><strong>Sous 24h</strong> · Notre équipe vous appelle au {{ reservation.parentPhone }} pour valider la date et la formule.</li>
+                <li><strong>Acompte de 50 €</strong> à régler sur place ou par virement après l'appel (pas de paiement en ligne en V1).</li>
+                <li><strong>J−7</strong> · On vous envoie un mail rappel avec le plan d'accès et les détails du jour J.</li>
+                <li><strong>Jour J</strong> · Arrivée 15 min avant le créneau, accueil par notre animateur.</li>
+            </ul>
+        </div>
+
+        <div style="background:#3d1b6b;border-radius:18px;padding:24px;margin-bottom:18px;">
+            <h2 style="font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:#ff2d87;margin:0 0 14px;">FAQ express</h2>
+            <p style="margin:8px 0;font-size:14px;"><strong>Politique d'annulation :</strong> acompte remboursé jusqu'à 7 jours avant la date.</p>
+            <p style="margin:8px 0;font-size:14px;"><strong>Modifier ma demande :</strong> répondez simplement à ce mail.</p>
+            <p style="margin:8px 0;font-size:14px;"><strong>Contact :</strong> <a href="mailto:contact@familygamescenter.fr" style="color:#00e5ff;">contact@familygamescenter.fr</a> · 02 54 XX XX XX.</p>
+        </div>
+
+        <p style="text-align:center;font-size:13px;opacity:.6;margin-top:24px;">
+            Family Games Center · Avenue de Châteaudun, 41000 Blois<br>
+            <a href="https://familygamescenter.fr" style="color:#ffd93d;">familygamescenter.fr</a>
+        </p>
+    </div>
+</body>
+</html>

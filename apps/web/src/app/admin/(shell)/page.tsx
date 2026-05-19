@@ -4,6 +4,7 @@ import {
   CalendarCheck,
   Activity,
   Briefcase,
+  TrendingUp,
 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/admin-auth';
 import { getDashboard } from '@/lib/admin-api';
@@ -59,7 +60,7 @@ async function DashboardContent() {
     <>
       <DemoBanner visible={data.meta.demo} />
 
-      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <KpiCard
           label="CA aujourd'hui"
           icon={CircleDollarSign}
@@ -96,6 +97,15 @@ async function DashboardContent() {
           sparkline={data.kpis.revenueMonth.spark}
           accent="pink"
         />
+        <KpiCard
+          label="Pipeline B2B"
+          icon={TrendingUp}
+          value={currencyEUR.format(data.kpis.b2bPipeline.value)}
+          delta={data.kpis.b2bPipeline.delta}
+          deltaSuffix="stages ouverts"
+          sparkline={data.kpis.b2bPipeline.spark}
+          accent="brand"
+        />
       </div>
 
       <RecentActivity items={data.recentActivity} />
@@ -106,7 +116,8 @@ async function DashboardContent() {
 function DashboardSkeleton() {
   return (
     <>
-      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <KpiCardSkeleton />
         <KpiCardSkeleton />
         <KpiCardSkeleton />
         <KpiCardSkeleton />

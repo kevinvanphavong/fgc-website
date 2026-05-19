@@ -2,6 +2,8 @@
 
 namespace App\Controller\Api\Admin;
 
+use App\Repository\B2BRequestRepository;
+use App\Repository\DemandeReservationRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -18,6 +20,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/api/admin')]
 class DashboardController extends AbstractController
 {
+    public function __construct(
+        private readonly DemandeReservationRepository $demandeRepo,
+        private readonly B2BRequestRepository $b2bRepo,
+    ) {
+    }
+
     #[Route('/dashboard', name: 'api_admin_dashboard', methods: ['GET'])]
     #[IsGranted('ROLE_STAFF')]
     public function dashboard(): JsonResponse
@@ -61,10 +69,12 @@ class DashboardController extends AbstractController
                 'delta' => 12,
                 'spark' => [1280, 1320, 1450, 1610, 1580, 1820, 2100],
             ],
+            // PR5 : data réelle (count `nouveau` du jour). Le sparkline reste
+            // mocké tant qu'on n'a pas l'historisation par jour.
             'reservationsToday' => [
-                'value' => 12,
-                'delta' => 3,
-                'spark' => [5, 4, 6, 8, 7, 9, 12],
+                'value' => $this->demandeRepo->getAdminStats()['newToday'],
+                'delta' => 0,
+                'spark' => [5, 4, 6, 8, 7, 9, $this->demandeRepo->getAdminStats()['newToday']],
             ],
             'occupancyRate' => [
                 'value' => 0.74,
@@ -75,6 +85,12 @@ class DashboardController extends AbstractController
                 'value' => 11455,
                 'delta' => 18,
                 'spark' => [8200, 9100, 8900, 10200, 11400, 11455],
+            ],
+            // PR6 : pipeline B2B (somme estimée des stages ouverts en €).
+            'b2bPipeline' => [
+                'value' => intdiv($this->b2bRepo->getAdminStats()['openValueCents'], 100),
+                'delta' => 0,
+                'spark' => [4200, 5100, 5800, 6400, 7200, 7900],
             ],
         ];
     }

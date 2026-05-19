@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Button from '@/components/ui/Button';
+import DevisB2BForm from '@/components/sections/entreprises/DevisB2BForm';
 
 const FORMATS = [
   {
@@ -29,14 +30,6 @@ const FORMATS = [
     description:
       "Privatisation d'un espace bar, cocktails dînatoires, animation karaoké ou blind test. L'occasion de marquer les esprits autrement.",
   },
-];
-
-const EVENT_TYPES = [
-  'Team Building',
-  'Arbre de Noël',
-  'Séminaire',
-  'Soirée client',
-  'Autre',
 ];
 
 export default function EntreprisesPage() {
@@ -140,109 +133,9 @@ export default function EntreprisesPage() {
             recontacte sous 48h avec une proposition adaptée.
           </p>
 
-          <div className="mx-auto max-w-3xl rounded-fgc-lg border border-fgc-yellow/20 bg-fgc-card p-8 md:p-10">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert(
-                  'Merci ! Nous reviendrons vers vous sous 48h.'
-                );
-              }}
-              className="flex flex-col gap-5"
-            >
-              <div className="grid gap-5 md:grid-cols-2">
-                <FormField
-                  label="Entreprise"
-                  type="text"
-                  required
-                  placeholder="Nom de votre entreprise"
-                />
-                <FormField
-                  label="Contact"
-                  type="text"
-                  required
-                  placeholder="Votre nom"
-                />
-              </div>
-              <div className="grid gap-5 md:grid-cols-2">
-                <FormField
-                  label="Email"
-                  type="email"
-                  required
-                  placeholder="vous@entreprise.fr"
-                />
-                <FormField
-                  label="Téléphone"
-                  type="tel"
-                  placeholder="06 …"
-                />
-              </div>
-              <div className="grid gap-5 md:grid-cols-2">
-                <div className="flex flex-col gap-2">
-                  <label className="font-display text-[0.82rem] uppercase tracking-wider text-fgc-cream/70">
-                    Type d&apos;événement
-                  </label>
-                  <select className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 text-fgc-cream outline-none transition-colors focus:border-fgc-yellow/50">
-                    {EVENT_TYPES.map((t) => (
-                      <option key={t} className="bg-fgc-bg text-fgc-cream">
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <FormField
-                  label="Nombre de personnes"
-                  type="number"
-                  placeholder="10"
-                  min={1}
-                />
-              </div>
-              <div className="grid gap-5 md:grid-cols-2">
-                <FormField label="Date souhaitée" type="date" />
-                <FormField
-                  label="Budget approximatif"
-                  type="text"
-                  placeholder="ex : 1 500 € — 3 000 €"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-display text-[0.82rem] uppercase tracking-wider text-fgc-cream/70">
-                  Votre projet
-                </label>
-                <textarea
-                  className="min-h-[140px] resize-y rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 text-fgc-cream outline-none transition-colors focus:border-fgc-yellow/50"
-                  placeholder="Décrivez-nous votre événement, vos envies, vos contraintes…"
-                />
-              </div>
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center gap-2.5 rounded-full border-2 border-fgc-yellow-shadow bg-fgc-yellow px-6 py-3.5 font-display text-[1rem] uppercase leading-none text-fgc-purple shadow-fgc-btn-yellow transition-transform hover:-translate-y-0.5 active:translate-y-px"
-              >
-                Envoyer ma demande
-              </button>
-            </form>
-          </div>
+          <DevisB2BForm />
         </div>
       </section>
     </>
-  );
-}
-
-function FormField({
-  label,
-  ...props
-}: {
-  label: string;
-} & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label className="font-display text-[0.82rem] uppercase tracking-wider text-fgc-cream/70">
-        {label}
-      </label>
-      <input
-        {...props}
-        className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 text-fgc-cream outline-none transition-colors focus:border-fgc-yellow/50"
-      />
-    </div>
   );
 }

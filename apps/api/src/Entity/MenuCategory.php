@@ -48,6 +48,11 @@ class MenuCategory
     #[Groups(['menu:read', 'menu:write'])]
     private int $position = 0;
 
+    // section : non exposé en API. La MenuCategory s'édite via la collection
+    // `columns` de MenuSection (cascade persist). Exposer en `menu:write` ici
+    // déclenche une boucle d'eager loading API Platform 4
+    // (MenuCategory→items→MenuItem→category→MenuCategory) car l'EagerLoading-
+    // Extension ne déduplique pas les associations bidirectionnelles.
     #[ORM\ManyToOne(targetEntity: MenuSection::class, inversedBy: 'columns')]
     #[ORM\JoinColumn(nullable: false)]
     private ?MenuSection $section = null;

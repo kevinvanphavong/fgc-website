@@ -2,7 +2,172 @@
 
 > Un bullet par PR significative. Date | branch | scope | décisions notables.
 
+## 2026-05-19
+
+- **`main`** — `feat(admin,web)`: polish back-office — Cmd+K, Tweaks panel, raccourcis clavier, A11y, responsive, 404 (PR8).
+  - **Cmd+K Command Palette** (`components/admin/cmdk/CommandPalette.tsx`) : modal ⌘K/Ctrl+K, 5 sections (Aller à, Actions, Réservations, Demandes B2B, Clients). Recherche fuzzy via `fuse.js` (~5 kb, ajouté en dep). Navigation ↑↓/Enter/Esc, item actif fond brand-soft. Sélection résa/B2B/client → `router.push` avec `?open={id}` (lecture côté pages laissée optionnelle pour V2). Items "Actions V2" (créer résa manuelle, exporter CSV) visibles désactivés avec hint "V2". Charge 30 résa + 30 B2B + clients page 1 au premier open (pas de polling).
+  - **Tweaks Panel** (`components/admin/tweaks/TweaksPanel.tsx` + `lib/admin-tweaks.ts`) : toggle ⌘./Ctrl+. + bouton flottant bas-droite + close ⌘./Esc. 3 réglages persistés `localStorage` clé `fgc.admin.tweaks` :
+    - **Densité** (compact/regular/comfy) : applique `font-size` + CSS vars `--admin-row-py/--admin-card-p` via `html[data-admin-density]`.
+    - **Sidebar** (expanded/collapsed/floating) : expanded = défaut, collapsed = icônes seules + `title` tooltip, floating = drawer overlay (auto-activé sous 1024px).
+    - **Thème** (light = défaut, dark/system = disabled marqué "bientôt" cf. prompt § "Si bloqué" — `tailwind.config.ts` resterait à étendre pour V2).
+    - Hook `useAdminTweaks()` partagé + listener `storage` pour sync multi-onglets.
+  - **Raccourcis clavier** (`lib/admin-keyboard.ts` + `cmdk/ShortcutsHelpModal.tsx`) : `g d/r/b/c/m/u` (séquence g + lettre, timeout 1.5s, style Gmail/Linear) → navigation pages. `?` → modale aide. `/` → focus première barre de recherche `[data-admin-search]`. Tous désactivés quand un input/textarea/select/contentEditable a le focus (`isTypingTarget`). Modale aide affiche la liste + section "extras" (⌘K, ⌘., Esc).
+  - **A11y sweep** :
+    - `Drawer` : focus trap au Tab (boucle Shift+Tab inverse), focus initial sur 1er élément focusable au tick suivant, restitution focus au déclencheur à la fermeture (`triggerRef`), `role="dialog"` + `aria-modal="true"` + `aria-label`.
+    - Skip link `<a href="#admin-main" class="admin-skip-link">Aller au contenu</a>` en haut du shell, visible au focus uniquement (CSS `position:absolute;left:-9999px;` → `left:0` au focus).
+    - `<main id="admin-main" tabIndex={-1}>` ciblable par le skip link.
+    - `aria-current="page"` confirmé sur sidebar items actifs (déjà PR1).
+    - Boutons icons-only de la sidebar collapsed + topbar : `title` + `aria-label` cohérents (déjà PR1, vérifié).
+    - `focus-visible` ring `admin-brand-ring` 2px ajouté aux boutons clés (topbar burger/help, drawer close, tweaks).
+  - **Responsive** :
+    - Sidebar passe auto en `floating` sous 1024px (matchMedia), bouton burger affiche/cache l'overlay (`Menu` icon en mobile, `PanelLeft` en desktop).
+    - Kanban (Réservations + B2B) bascule en `<select>` de stage + liste verticale sous 1024px (`lg:hidden`/`hidden lg:block`).
+    - Main : `px-3 py-3` sous `md` (vs `px-6 py-6` desktop).
+    - Toolbars : inputs `max-md:w-full` au lieu de `w-64`.
+    - Toast container : `max-md:bottom-3 max-md:right-3 max-md:left-3` (pleine largeur mobile).
+    - Drawer : `width: min(560px, 100vw)` → full-width mobile.
+  - **Toast stack** : max 3 visibles via `.slice(-3)` (les anciens sortent silencieusement, le timer de 4s gère le reflux).
+  - **Page 404 admin** (`app/admin/(shell)/not-found.tsx`) : layout admin conservé (shell parent), message centré "Cette page n'existe pas" + CTA retour dashboard + rappel ⌘K.
+  - **AdminShell** refactoré : remplace l'ancien state `collapsed` local par la source de vérité `useAdminTweaks().tweaks.sidebar` (avec fallback `floating` automatique sous 1024px), expose `onOpenHelp` à la Topbar, monte `<TweaksPanel/>` + `<CommandPalette/>` + `<ShortcutsHelpModal/>`.
+  - **Auto-vérification** :
+    - `make test-api` → **102 tests verts, 312 assertions, 0 failure** (aucun backend touché).
+    - `npm run build` → 0 erreur TS. `+5 kb` env sur l'admin (fuse.js + composants polish), pas de régression poids public.
+    - Smoke navigateur : ⌘K ouvre, "anniv" matche page + résas, Enter route + ferme ; ⌘. ouvre tweaks, densité compact persiste après reload ; `g r` route vers résa, `g r` dans un input = frappe normale ; `?` ouvre modale, Esc ferme ; resize 800px → sidebar burger + kanban en select+liste ; `/admin/n-existe-pas` → 404 dans layout shell ; drawer Tab cycle + focus restitué au clic close.
+  - **Différé V2** (cf. prompt § "À NE PAS faire") : multi-langue, dashboard widgets drag&drop, notifications push, PWA offline, optim mobile fine.
+
+## 2026-05-19
+
+- **`main`** — `feat(admin,api,web)`: 3 modules secondaires admin — Clients / Médias / Users & rôles (PR7).
+  - **API** :
+    - **Clients (lecture seule)** : `ClientsController` qui agrège `DemandeReservation` + `B2BRequest` par email, normalise en `{email, displayName, phone, firstSeenAt, lastSeenAt, totalReservations, totalAnniv, totalB2B, sources, tags}`. Tags calculés à la volée : `fidele` (totalReservations≥5), `vip` (totalAnniv≥3), `b2b` (totalB2B≥1). 3 endpoints : `GET /admin/clients` (filtres `search/tag/from/to`, pagination 25/page, tri `lastSeenAt DESC`), `GET /admin/clients/{email}` (URL-encodé, ajoute historique des 50 dernières interactions mélangées), `GET /admin/clients/stats` (total/fideles/vip/newRecent 30j). Performance V1 : pas de cache, agrégat applicatif sur le volume FGC actuel (<100 résa/an). V2 si volume > 1000 = vue matérialisée Postgres.
+    - **Médias** : nouvelle entité `Media` (table `media`, index `(tag, created_at)`) avec enum `MediaTag` (6 valeurs : hebdo/anniversaires/evenement/bar/salle/global). Service `MediaUploader` (V1 disque local `public/uploads/medias/{yyyy}/{mm}/{slug}-{rand}.{ext}`, structure pensée bascule S3 V2). Limites strictes : 5 Mo, mime whitelist (`image/jpeg|png|webp|gif|avif`), dimensions max 4000×4000. `MediaUploadController` dédié pour le POST multipart (controller séparé pour éviter la config multipart sur ApiResource — cf. prompt § "Si bloqué"). GET/PATCH/DELETE via ApiResource standard (`uriTemplate: /admin/medias`, requirements `\d+`). `MediaDeleteListener` `#[AsEntityListener(postRemove)]` purge le fichier disque à la suppression. Migration `Version20260518233252`.
+    - **Users & rôles** : refacto `User` avec `enabled` (boolean défaut true), `resetToken` (unique nullable), `resetTokenExpiresAt`, `lastLoginAt`, `createdAt`. Migration `Version20260518233857` (backfill `created_at = NOW()` puis SET NOT NULL pour ne pas casser les rows existants). `AppUserChecker` plugué sur le firewall `api_login` (json_login user_checker) → bloque l'auth si `enabled=false` via `CustomUserMessageAccountStatusException`. `UsersController` (ROLE_ADMIN uniquement) : `GET /admin/users` listing, `POST /admin/users/invite` (création + token reset 24h + mail best-effort via `UserInviteMailer`), `GET /admin/users/{id}`, `PATCH /admin/users/{id}` (édite firstName/lastName/role/enabled — refuse auto-désactivation et auto-déclassement de ROLE_ADMIN avec 422), `DELETE /admin/users/{id}` toujours 403 (suppression hard interdite, doctrine). `POST /api/auth/reset-password` (public — token + newPassword, active le compte + invalide le token). `security.yaml` `access_control` étendu : `/api/admin/users` requiert ROLE_ADMIN, `/api/auth/reset-password` PUBLIC_ACCESS.
+    - **Tests** `ClientsAggregateTest` (5 scénarios : 401, 200 + count, search, tag b2b, stats, detail history). **Suite full : 102 tests, 312 assertions, 6 skipped, 0 failure, 2.6s.**
+  - **Web** :
+    - **Proxy admin** : support multipart ajouté (`request.body` stream + `duplex: 'half'` quand `content-type` commence par `multipart/form-data`) — nécessaire pour l'upload média sans casser les boundaries.
+    - Page `/admin/clients` : 4 KPI cards (total / fidèles / VIP / nouveaux 30j), toolbar search + filtre tags (Tous/Fidèles/VIP/B2B), tableau avec colonne tags badges colorés, drawer avec historique chronologique anniv/B2B mélangé. Hook `useClients.ts` (`useClientsList`, `useClientsStats`, `useClientDetail`).
+    - Page `/admin/medias` : toolbar 6 tags + Tout, bouton "Importer" → modale upload (drag&drop, preview, sélecteur tag, mime + taille validés client + serveur), grille responsive `repeat(auto-fill, minmax(200px, 1fr))` de cards thumbnail (image + nom + dimensions + taille + sélecteur tag éditable + bouton delete avec ConfirmDialog destructive). Hook `useMedia.ts` (`useMediasList`, `useMediaUpload`, `useMediaPatch`, `useMediaDelete`).
+    - Page `/admin/users` : RSC mince qui vérifie `getCurrentUser().roles.includes('ROLE_ADMIN')` et `redirect('/admin')` sinon (3ᵉ couche défense après sidebar + API). `UsersClient` avec tableau (avatar + nom + email + rôle badge + statut actif/désactivé + dernière connexion), encart sidebar droite "Rôles & permissions" (3 rôles avec descriptions statiques), modale "Inviter" (email/prénom/nom/rôle), drawer édition (changer rôle, toggle enabled — désactivés sur soi-même avec message). Hook `useUsers.ts`.
+    - Page `/admin/setup-password` (publique) : exclusion ajoutée au middleware (au même titre que `/admin/login`). Form newPassword + confirmation, POST `/api/auth/reset-password` direct vers `NEXT_PUBLIC_API_BASE_URL`, redirect `/admin/login` 1.5s après succès.
+    - **Sidebar** : item "Utilisateurs" masqué si `!user.roles.includes('ROLE_ADMIN')`.
+  - **Auto-vérification** :
+    - `make test-api` → 102 tests verts (3 nouveaux + héritage), 2.6s.
+    - `npm run build` → 0 erreur TS, nouvelles routes `/admin/clients` (4.47 kB), `/admin/medias` (7.67 kB), `/admin/users` (6.5 kB), `/admin/setup-password` (2.38 kB, statique).
+    - Smoke curl : agrégat Clients retourne 10 clients avec tags corrects (1 fixture B2B `smoke-test@fgc.fr` = tag `b2b`). Invite `smoke-test@fgc.fr` → user créé `enabled=false`, login impossible (401). Reset password avec le token → `{"ok":true}` + user activé. Re-login = 200. PATCH `enabled=false` sur soi-même = 422. DELETE = 403. Accès `/admin/users` en ROLE_MANAGER = 403. Upload PNG = 201 + fichier servable. Upload PDF = 400.
+  - **Différé V2** (cf. prompt § "À NE PAS faire") : export CSV (tous modules), matrice de permissions dynamique, suppression hard d'un user (jamais — délibéré), tags clients custom en BDD, redimensionnement/compression images, génération d'affiches IA (flux séparé Mr Vong), 2FA admin.
+
+- **`main`** — `feat(admin,api,web)`: pipeline B2B + branchement formulaire entreprises (PR6+PR9) — entité `B2BRequest`, endpoints public/admin, page `/admin/b2b` Kanban 6 colonnes + drawer + KPI, formulaire `/entreprises` branché.
+  - **API** :
+    - Nouvelle entité `B2BRequest` (table `b2b_request`, index `(stage, created_at)`) avec enums PHP 8.1 `B2BStage` (`nouveau` → `qualifie` → `devis_envoye` → `negociation` → `gagne` | `perdu`) et `B2BType` (`seminaire` / `team_building` / `soiree` / `arbre_noel` / `autre`). Champs : `reference` (`FGC-B2B-XXXXXX`), contact (firstName/lastName/email/phone), `companyName`, `eventDate` nullable (≥J+14), `expectedAttendees` (10-300), `message`, `estimatedValueCents` (posé par l'admin), `adminNote` (2000), `acceptRgpd`, 4 stamps internes (`internalQualifiedAt/QuotedAt/NegotiatedAt/ClosedAt`). Migration `Version20260518222859`.
+    - **4 operations ApiResource** (snake_case partout — cf. § "Si bloqué" du prompt) :
+      - Public `POST /api/entreprises/devis` via DTO `B2BDevisRequestInput` (Assert\*) + `B2BDevisRequestProcessor` (rate limit `b2b_devis_post` 3/min/IP, génération référence, mails best-effort).
+      - Admin `GET /api/admin/b2b-requests` (SearchFilter `stage|type|reference|companyName|contactLastName|contactEmail`, DateFilter `createdAt|eventDate`, OrderFilter, `paginationItemsPerPage: 25`).
+      - Admin `GET /api/admin/b2b-requests/{id}` + `PATCH` (`requirements: ['id' => '\\d+']` → laisse `/stats` passer ; gotcha #6 uriTemplate explicite).
+      - PATCH accepte `stage` (machine d'état dans l'enum, 422 si transition interdite, stamp auto via `match`), `adminNote`, `estimatedValueCents`.
+    - Custom controller `B2BRequestStatsController` → `GET /api/admin/b2b-requests/stats` retourne `{ byStage, openCount, openValueCents, wonValueCentsThisQuarter, conversionRate, avgResponseTimeMinutes }`. SQL natif pour `avgResponseTimeMinutes` (Doctrine DQL n'a pas `EXTRACT EPOCH`).
+    - `AdminB2BRequestProcessor` wrap `PersistProcessor` (même pattern que PR5).
+    - Mails Twig `b2b_devis_admin.html.twig` + `b2b_devis_client.html.twig` via `B2BDevisMailer` (calqué sur `BirthdayReservationMailer`, best-effort).
+    - `DashboardController::kpis()` étendu : nouvelle tuile `b2bPipeline` (somme `openValueCents` en €).
+    - `B2BRequestFixtures` — 6 demandes (1 par stage) avec stamps cohérents pour visualiser le Kanban dès le 1er login admin.
+    - **Tests** `B2BRequestPublicTest` (6 scénarios : 201 nominal, 422 rgpd/dateJ+14/typeInvalide/attendees, 201 sans eventDate) + `B2BRequestAdminTest` (6 scénarios : listing 401/200, filtre `?stage=qualifie`, stats 401/200, PATCH `nouveau→qualifie` + stamp, PATCH `qualifie→gagne` 422, PATCH `adminNote+estimatedValueCents` 200). **Suite full : 97 tests, 282 assertions, 6 skipped, 0 failure, ~2s.**
+    - Rate limiter `b2b_devis_post` (3/min) avec override `1000` en `when@test`.
+  - **Web** :
+    - Page publique `/entreprises` : formulaire refactoré en client component `<DevisB2BForm>` avec RHF + zodResolver, validation Zod miroir des Assert\* PHP (entreprise, contact firstName/lastName/email/phone FR, type 5 valeurs, attendees 10-300, eventDate ≥J+14 optionnelle, message ≤2000, RGPD requis). Submit POST `/entreprises/devis` via helper `api`. 201 → écran de confirmation inline avec référence + "on vous recontacte sous 48h ouvrées". 4xx → toast/violations mappées champ par champ.
+    - Page admin `/admin/b2b` (RSC mince → `B2BClient`) : header description, **4 KPI cards** (Demandes ouvertes, Pipeline €, Taux transfo, Délai moyen de réponse — alimentées par `/stats`), toolbar (search par nom d'entreprise + filtre type 6 options), **Kanban 6 colonnes uniquement** (@dnd-kit/core, count + somme `estimatedValueCents` formatés en haut de chaque colonne via `Intl.NumberFormat fr-FR EUR`).
+    - **`B2BDrawer`** (largeur 560px) : récap (entreprise/type/date/persons), contact (mailto+tel), montant estimé éditable (autosave debounce 800ms), transitions selon machine d'état (modale confirmation pour `perdu`, bouton vert spécifique pour `gagne`), note interne autosave 800ms, timeline 5 stamps, footer "Envoyer le devis par email" en **mailto pré-rempli** (V1 — génération PDF auto en V2).
+    - Hook `useB2BRequest.ts` (`useB2BList`, `useB2BStats` polling 60s, `useB2BPatch` avec `merge-patch+json` direct). Meta `b2b-meta.ts` (`B2B_STAGE_META` → `admin-amber/blue/brand/pink/green/slate`, `B2B_TYPE_META` avec emojis, helpers `formatEUR/formatEventDate/formatResponseTime`).
+    - **Sidebar** : badge rouge live sur "Demandes B2B" (count B2B `nouveau`, via `useB2BStats`, polling React Query).
+    - **Dashboard** : 5ᵉ tuile "Pipeline B2B" (`b2bPipeline.value` en €, accent brand). Grid passée à 5 colonnes en `xl:` (3 en `lg:`, 2 en `sm:`, 1 en mobile).
+  - **Auto-vérification** :
+    - `make test-api` → 97 tests verts, 282 assertions, 2s.
+    - `npm run build` → 0 erreur TS, `/admin/b2b` ƒ 8.79 kB, `/entreprises` ƒ 6.12 kB.
+    - Curl public : POST nominal → 201 + `FGC-B2B-WZU9HH` (réf valide). `acceptRgpd: false` → 422. `expectedAttendees: 5` → 422.
+    - Curl admin : `GET /api/admin/b2b-requests` sans token → 401 ; avec ROLE_STAFF → 200 + 6 fixtures. `/stats` répond `{byStage, openCount, openValueCents, …}`. PATCH transition valide stamp `internalQualifiedAt`, transition interdite rejetée 422 avec message lisible.
+  - **Différé V2** (cf. prompt § "À NE PAS faire") : génération PDF du devis, workflow envoi automatique, vue Tableau/Calendrier (Kanban couvre 95% de l'usage commercial), export CSV, création manuelle depuis l'admin, module CRM Clients (= PR7), relances automatiques / cadences.
+
+- **`main`** — `feat(admin,api)`: gestion des demandes de réservation anniv (PR5) — listing + filtres, kanban DnD, drawer, transitions status, note interne, badge sidebar.
+  - **API** :
+    - Extension `DemandeReservation` : `adminNote` (text 2000), 4 stamps `internalContactedAt` / `internalConfirmedAt` / `internalRefusedAt` / `internalPassedAt`. Migration `Version20260518215447`.
+    - 3 nouvelles operations admin sur `#[ApiResource]` (uriTemplate explicite `/admin/demandes-reservation` — gotcha #6) : `GetCollection` (avec `SearchFilter` + `DateFilter` + `OrderFilter`, `paginationItemsPerPage: 25`), `Get` (`requirements: ['id' => '\\d+']` pour ne pas capturer `/stats`), `Patch`. Toutes `is_granted('ROLE_STAFF')`. Groupes Serializer `demande:admin:read` / `demande:admin:write` (seuls `status` + `adminNote` denormalisables — RGPD/traçabilité, le reste est figé).
+    - Machine d'état centralisée dans l'enum (`allowedNextStates()` + `canTransitionTo()`). `AdminDemandeReservationProcessor` wrap autour du `PersistProcessor` Doctrine : rejette 422 si transition interdite, stamp le timestamp correspondant à la transition (via `match`).
+    - Custom controller `DemandeReservationStatsController` → `GET /api/admin/demandes-reservation/stats` (counts par status + `newToday`).
+    - `DashboardController::kpis()` consomme `getAdminStats()['newToday']` pour `reservationsToday.value` (le sparkline reste mocké en attendant l'historisation par jour).
+    - Repository `DemandeReservationRepository::getAdminStats()` (1 query GROUP BY + 1 count `nouveau` du jour).
+    - **Tests** `DemandeReservationAdminTest` — 6 scénarios : listing 401/200, filter `?status=nouveau`, stats 401/200, PATCH transition valide + stamp posé, PATCH transition interdite 422, PATCH `adminNote` seule 200. **Suite full : 85 tests, 241 assertions, 6 skipped, 0 failure, ~2.3s**.
+  - **Web** :
+    - Page `/admin/reservations` (RSC mince → composant client `ReservationsClient`) avec Toolbar (search par référence, période 7j/30j/Tous, chips multi-status, switch Kanban↔Tableau persisté en `localStorage` clé `fgc.admin.resa.view`) + grille de 5 compteurs status en haut.
+    - **Kanban** via `@dnd-kit/core` (installé) : 5 colonnes (`KANBAN_COLUMNS`), drag&drop card-by-card. Si la transition cible n'est pas dans `ALLOWED_TRANSITIONS[from]` côté front → toast rouge "non autorisée" (server reste source de vérité — 422 attrapée en fallback). PointerSensor avec `activationConstraint: { distance: 6 }` pour ne pas confondre clic et drag.
+    - **Tableau** avec colonnes ref, status pill, date, créneau, parent, formule, enfants, créée (relative).
+    - **`ReservationDrawer`** (largeur 560px) : 4 blocs — récap demande, parent organisateur, transitions (boutons disabled selon machine d'état, modale confirmation pour `refuse`), note interne (textarea autosave debounce 800ms via PATCH), timeline des stamps.
+    - Hook custom `useDemandeReservation.ts` exposant `useReservationsList`, `useReservationsStats` (polling 60s + refetch on focus), `useReservationPatch`. PATCH passe par `fetch` direct avec `Content-Type: application/merge-patch+json` (le helper `apiCall` standard envoie `ld+json` qui ne marche pas pour PATCH côté API Platform).
+    - **Sidebar** : badge live rouge sur l'item « Réservations B2C » = `stats.byStatus.nouveau`. Quand 0, badge masqué. Polling porté par React Query, donc invalidé à chaque mutation PATCH.
+    - **AdminProviders** déplacé du layout interne `contenus/` au layout `(shell)/` racine — la sidebar utilise désormais React Query, donc `QueryClientProvider` doit englober tout l'admin (sinon `useReservationsStats` throw « No QueryClient set »). Layout contenus simplifié en conséquence.
+    - Tokens DS admin uniquement : `STATUS_META` map status → `admin-amber|blue|green|slate|red` (souples + pleins) + dot.
+  - **Auto-vérification** :
+    - `make test-api` → 85 tests verts, 2.3s.
+    - `npm run build` → 0 erreur TS, `/admin/reservations` ƒ 22.2 kB.
+    - Smoke avec cookie admin via Next proxy : `GET /admin/demandes-reservation` listing OK, `?status[]=nouveau` filtre OK, `/stats` répond `{byStatus, newToday, total}`, dashboard KPI `reservationsToday` reflète `newToday` réel (et non plus le mock 12).
+    - Drag&drop visuel + transition stamp vérifié en PATCH curl direct (`status: nouveau→contacte` réussit + `internalContactedAt` posé, `contacte→passe` rejeté 422 avec message lisible).
+  - **Différé V2** (cf. prompt § « À NE PAS faire ») : vue calendrier, export CSV, email auto sur refus, création de demande depuis l'admin, conflits côté admin (le tunnel les bloque en amont via 409), module B2B (= PR6).
+
 ## 2026-05-18
+
+- **`main`** — `feat(api,web)`: tunnel réservation anniversaire V1 sans Stripe (PR10+PR13) — 5 étapes, demande + mails, conflit créneau.
+  - **API (PR10)** :
+    - Entité `DemandeReservation` + enum `DemandeReservationStatus` (`nouveau → contacte → confirme | refuse → passe`, CLAUDE.md §11). Index `(event_date, time_slot)` pour la requête de dispo. Repository `findReservedSlots` + `isSlotTaken`.
+    - DTO `BirthdayReservationInput` avec `Assert\\*` sur tous les champs + 1 `Assert\\Callback` pour la règle date ≥ J+7. Le check `kidsCount ≥ formule.minKids` et le check conflit créneau vivent dans le Processor (DB-dépendant).
+    - State `BirthdayReservationProcessor` (implémente `ProcessorInterface`) : valide cross-field DB → instancie l'entité → génère la référence `FGC-XXXXXX` (alphabet 31 chars sans I/O/0/1) → persist → envoie les 2 mails best-effort (échec = log, pas de rollback). Rate limit `5/min/IP` via `framework.rate_limiter`.
+    - Endpoint POST exposé en `#[ApiResource]` sur l'entité (uniquement `new Post(uriTemplate: '/reservations/anniversaire', input: BirthdayReservationInput, processor: BirthdayReservationProcessor)`).
+    - Endpoint `GET /api/reservations/anniversaire/availability?date=YYYY-MM-DD` (controller dédié, rate limit `30/min/IP`) — renvoie les 6 slots avec `available: bool`.
+    - Mails Twig dans `templates/emails/anniv_demande_{admin,client}.html.twig` — récap complet pour le gérant, accusé + FAQ courte + référence pour le parent. Service `BirthdayReservationMailer` autowiré (paramètres `mailer.from_address` / `mailer.from_name` / `mailer.reservations_to` avec défauts dev).
+    - **Extension `AnnivCard`** : 4 nouveaux champs (`unitPriceCents`, `minKids`, `duration`, `tagline`) pour exposer les données numériques nécessaires au calcul du total fête + au matching maquette. `price` (string) reste pour l'affichage public. Migration Doctrine `Version20260518201638`.
+    - Fixtures dev `DemandeReservationFixtures` — 3 demandes en statuts différents (`nouveau`, `contacte`, `confirme`) pour préparer le module admin PR5.
+    - Rate limiter : config `framework.rate_limiter` (`anniv_post: 5/min`, `anniv_availability: 30/min`) ; en `env=test` les limites montent à 1000 (sinon la suite full tombe en 429).
+    - **Tests `WebTestCase`** : `tests/Controller/Api/AnnivReservationTest.php` (6 scénarios — 201 nominal, 422 acceptCGV=false, 422 date trop proche, 422 kidsCount<minKids, 409 conflit créneau, 200 availability avec slot réservé reflété). **Suite totale : 79 tests, 215 assertions, 6 skipped, 0 failure, ~1.5s**.
+    - Dépendances installées : `symfony/mailer`, `symfony/rate-limiter`, `symfony/lock` (toutes en 7.2.*).
+  - **Web (PR13)** :
+    - Route RSC `apps/web/src/app/(public)/reserver-anniversaire/page.tsx` — fetch les `AnnivFormule` depuis `/api/formules/anniversaires` (fallback statique avec warning), passe la query string `?formule=KEY` au composant client pour pré-sélection.
+    - Composant `TunnelAnniversaire` (5 étapes + écran de confirmation) découpé en 7 fichiers + 1 hook + 1 schema + 1 types + 1 api client. State machine portée par `useReservationTunnel` (sessionStorage `fgc.anniv.draft`, scroll auto, `history.replaceState` à la confirmation pour bloquer le back-nav).
+    - **Step 1 — Formule** : 3 cards animées (tokens DS `silver-formule` pour newbowler, `yellow` pour superbowler, `pink-hot` pour probowler — pas un hex en dur dans le JSX). Bandeau cyan adapté V1 « pas de paiement en ligne ».
+    - **Step 2 — Date** : calendrier mensuel custom (Monday-first, week-ends étoilés, J+7 minimum), fetch `availability` au changement de date, slots indisponibles grisés avec libellé « Réservé ». Cache local par ISO date dans le composant. Fallback indulgent si API down (tous slots dispo).
+    - **Step 3 — L'enfant** : prénom, picker d'âge 4→14, stepper kidsCount avec min/max formule, total estimé en bas de carte. **Upsell VR** : si formule = `newbowler`|`superbowler`, affiche un toggle « +Réalité virtuelle / passe en Pro Bowler 💎 » avec delta `+X €/enfant` calculé depuis le prix Pro Bowler. Toggle ON → `formuleKey = 'probowler' + upsellVR = true`.
+    - **Step 4 — Coordonnées** : 4 fields requis + 2 optionnels (source, message) + CGV/Newsletter avec validation locale (regex mobile FR + email).
+    - **Step 5 — Récap** : 4 blocks éditables (jump vers la step), aside avec total fête + encart cyan « pas de paiement en ligne ». Bouton « Confirmer ma demande » → POST `/reservations/anniversaire` → gestion explicite 409 (toast + lien retour Step 2 même date).
+    - **Confirmation** : visuel adapté V1 — titre « Demande envoyée », sous-titre « rappel sous 24h », plus aucune ligne « acompte payé / reste sur place », bouton copier-référence, bloc « ce qui arrive ensuite » 4 étapes.
+    - Schemas Zod par step (`@hookform/resolvers` déjà installé).
+    - **Header** : ajout d'un CTA principal pink « 🎉 Anniv » → `/reserver-anniversaire`, en plus du CTA jaune existant « Réserver » qui pointe toujours vers `bowling-de-blois.fr` (migration plus tard).
+    - **`/tarifs-et-formules`** : chaque carte AnnivCard a maintenant un bouton « Réserver {formule} » → `/reserver-anniversaire?formule=KEY`. Le CTA global « Réserver un anniversaire » bascule de `/contact` à `/reserver-anniversaire`.
+    - Token Tailwind ajouté : `fgc.silver-formule` + `fgc.silver-formule-dark` (newbowler).
+  - **Auto-vérification** :
+    - `make test-api` → 79 tests verts, 1.5s.
+    - `curl POST` nominal → 201 + `FGC-XXXXXX`. `acceptCGV: false` → 422. Date J+3 → 422. `kidsCount: 4` (formule newbowler) → 422. Double POST même créneau → 409.
+    - `curl GET availability` → 200 + slots avec `available: false` pour les réservés.
+    - `npm run build` → 0 erreur TS, `/reserver-anniversaire` ƒ 12.2 kB.
+    - Smoke navigateur : `GET /reserver-anniversaire` 200 (36 KB rendus), 3 formules présentes ; `?formule=probowler` 200 ; `/tarifs-et-formules` contient les 3 liens deep.
+  - **Différé V2 (cf. PROMPT §"À NE PAS faire")** : Stripe / 3DS / paiement carte, module admin gestion demandes (= PR5 back-office), mails de relance J−7 / SMS J−2, tracking analytics fin par étape.
+
+- **`main`** — `fix(api,web)`: expose les GetCollection publiques sur uriTemplate dédié (gotcha #6) + cleanup fallbacks content-api.
+  - **Audit des 13 entités** (sortie complète) : 12 saines (uriTemplate distinct sur la GetCollection publique) — `ActivityPageContent` (`/activites`), `AnnivCard` (`/formules/anniversaires`), `DaySchedule` (`/horaires`), `HebdoCard` (`/formules/hebdo`), `MenuSection` (`/menu`), `Offer` (`/offres`), `PassCard` (`/formules/pass`), `ResaCard` (`/formules/reservations`), `VipFeature` (`/formules/vip-features`) + `MenuCategory`/`MenuItem`/`TarifPriceLine` (admin-only par design). **1 cassée** : `TarifCard` (`new GetCollection(), new Get()` sans uriTemplate → écrasés par la déclaration admin).
+  - **Fix `TarifCard`** : ajout de `uriTemplate: '/formules/tarifs'` sur la GetCollection publique + `uriTemplate: '/formules/tarifs/{id}'` sur le Get public. `/api/formules/tarifs?cardGroup=activites` répond maintenant 200 (10 items total, filter SearchFilter sur `cardGroup` fonctionnel). `/api/tarif_cards` reste 401 (admin only, comportement attendu).
+  - **Fix `content-api.ts`** : `fetchTarifs` pointe sur `/formules/tarifs?cardGroup=${group}` (au lieu de `/tarif_cards?...`). Le helper `apiFetch` reste graceful-degraded (fallback statique préservé pour la résilience prod), mais il **log maintenant un `console.warn`** quand la dégradation est servie — un fallback silencieux a masqué le bug de routing pendant toute la PR4. Si un warning sort, c'est un vrai signal à investiguer.
+  - **Audit gotcha #5** (IRI custom non-mutable) : `apps/web/src/lib/admin-hooks/useEntity.ts` utilise déjà `/${collection}/${id}` pour PUT/DELETE — pas d'usage de `@id` côté admin. Pas de fix nécessaire côté hooks. La protection contre ce piège vit dans `AbstractEntityApiTestCase::postAndGetIri()` qui reconstruit l'IRI admin (cf. tests précédents).
+  - **Tests** : `TarifCardTest::testGetCollectionPublic` passe maintenant (publicUri = `/api/formules/tarifs`). Suite complète : **73 tests, 199 assertions, 6 skipped, 0 failure, ~2s**. Smoke navigateur sur `/tarifs-et-formules` → vrais tarifs API rendus (pas le fallback).
+  - **GOTCHAS.md** : entrée #6 passée de "À fixer V2" à "Fixé".
+
+- **`main`** — `test(api)`: infra env=test + 68 tests sur les 13 entités back-office + proxy admin (PR4 follow-up).
+  - **Infra** : `tests/bootstrap.php` drop+create+schema+fixtures la DB de test (`fgc_dev_test` via doctrine `dbname_suffix: _test`) à chaque run. Skip via `FGC_TEST_DB_SKIP_SETUP=1` pour les re-runs locaux rapides.
+  - **JWT** : nouvelle paire `config/jwt/private-test.pem` / `public-test.pem` (passphrase `test`, commitée — env=test only). `.gitignore` actualisé pour les laisser passer.
+  - **`.env.test`** : `DATABASE_URL` dupliquée depuis `.env.local` (qui n'est pas chargé en env=test) + `ADMIN_INITIAL_*` pour seeder `staff@test.fgc / TestPassw0rd!` via le `UserFixture` existant (pas de TestUserFixture séparée — la fixture user actuelle est paramétrée par env, donc réutilisée).
+  - **Helper** : `tests/Support/AuthenticatedClientTrait` (login JSON → cache du JWT statique → injection `Authorization: Bearer`). `static::ensureKernelShutdown()` entre chaque `createClient()` car Symfony 7 interdit le double-boot.
+  - **Base abstraite** `tests/Support/AbstractEntityApiTestCase` : 5 méthodes templatées (testGetCollectionPublic / testPostRequiresStaff / testPutRequiresStaff / testDeleteRequiresStaff / testPostValidation). Chaque entité = un fichier de ~15 lignes qui n'override que les helpers `publicUri/adminUri/validPayload/notBlankField`. Pour les 3 entités non POSTables directement (MenuCategory, MenuItem, TarifPriceLine — relation parente non exposée, cf. GOTCHAS), un flag `supportsDirectPost(): false` skip les chemins 201 / PUT200 / DELETE204 / validation tout en gardant la couverture des 401.
+  - **Tests** : `tests/Api/Entity/*Test.php` (13 fichiers) + `tests/Api/ProxyAdminTest.php` (smoke 3 entités, dataProvider PHPUnit 13). DashboardControllerTest (PR3) conservé. **Total : 73 tests, 196 assertions, 7 skipped légitimes, 0 failure, ~1.4s** — bien sous l'objectif 30s.
+  - **Régression vérifiée** : retirer `security: "is_granted('ROLE_STAFF')"` sur `Post` de `HebdoCard` → `testPostRequiresStaff` passe rouge (`Failed asserting that 201 is identical to 401`). Re-posée, vert.
+  - **Choix d'archi divergent du prompt** : pas de docker-compose `postgres-test` sur port 5433 — Kévin n'a pas d'env docker local et Postgres 16 tourne déjà avec `kevinvanphavong` comme superuser. La DB de test (`fgc_dev_test`) cohabite sans conflit. CI GitHub Actions tourne en revanche bien sur un service `postgres:16` standalone (cf. `.github/workflows/api-tests.yml`).
+  - **`dama/doctrine-test-bundle` non installé** : incompatible avec `doctrine/doctrine-bundle ^3.2` (dama plafonne à `^2.x`). Stratégie d'isolation alternative : bootstrap drop+seed à chaque run + clés uniques générées (`self::uniqueKey('xxx')`) dans `validPayload()` pour éviter les collisions UNIQUE entre tests. Documenté dans GOTCHAS.
+  - **Petits effets de bord détectés / fixés** :
+    - `src/Entity/ActivityPageContent.php` : parse error PHP (line 26, `])`, `]` doublons) hérité de PR4 — fix en place.
+    - L'IRI `@id` peut pointer vers une route publique Get sans support PUT/DELETE (ex. `ActivityPageContent` → `/api/activites/{slug}`). `postAndGetIri()` reconstruit toujours `<adminUri>/<id>` pour PUT/DELETE.
+  - **Outillage** : `apps/api/bin/test-api` + `Makefile` racine (`make test-api`, `make test-api-fast`). CI : `.github/workflows/api-tests.yml` (Postgres 16 service, PHP 8.3, exécute la suite sur PR/push qui touche `apps/api/**`).
 
 - **`main`** — `chore(api)`: kill EasyAdmin (PR4 final) — -15 controllers, -1 bundle, -3 security blocks, -1 route file.
   - **Étape 0** dry-run : `grep` n'a remonté que les fichiers à supprimer (les 15 controllers + bundles.php + routes/easyadmin.yaml).

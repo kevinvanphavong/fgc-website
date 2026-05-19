@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Demande B2B — {{ request.reference }}</title>
+</head>
+<body style="margin:0;padding:24px;background:#160a3a;color:#fff4e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#3d1b6b;border-radius:18px;padding:32px;">
+        <h1 style="font-size:22px;margin:0 0 8px;color:#ffd93d;">
+            💼 Nouvelle demande B2B
+        </h1>
+        <p style="margin:0 0 24px;color:#fff4e0;opacity:.85;">
+            Référence <strong style="color:#ff2d87;">{{ request.reference }}</strong> ·
+            Reçue le {{ request.createdAt|date('d/m/Y à H:i') }}
+        </p>
+
+        <div style="background:#160a3a;border-radius:14px;padding:20px;margin-bottom:16px;">
+            <h2 style="font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:#ffd93d;margin:0 0 12px;">L'événement</h2>
+            <p style="margin:6px 0;"><strong>Entreprise :</strong> {{ request.companyName }}</p>
+            <p style="margin:6px 0;"><strong>Type :</strong> {{ request.type.value }}</p>
+            <p style="margin:6px 0;"><strong>Participants attendus :</strong> {{ request.expectedAttendees }}</p>
+            {% if request.eventDate %}
+                <p style="margin:6px 0;"><strong>Date souhaitée :</strong> {{ request.eventDate|date('l d/m/Y') }}</p>
+            {% else %}
+                <p style="margin:6px 0;opacity:.7;"><em>Date à définir avec le client.</em></p>
+            {% endif %}
+        </div>
+
+        <div style="background:#160a3a;border-radius:14px;padding:20px;margin-bottom:16px;">
+            <h2 style="font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:#ffd93d;margin:0 0 12px;">Contact</h2>
+            <p style="margin:6px 0;"><strong>{{ request.contactFirstName }} {{ request.contactLastName }}</strong></p>
+            <p style="margin:6px 0;">📧 <a href="mailto:{{ request.contactEmail }}" style="color:#00e5ff;">{{ request.contactEmail }}</a></p>
+            <p style="margin:6px 0;">📱 <a href="tel:{{ request.contactPhone|replace({' ': ''}) }}" style="color:#00e5ff;">{{ request.contactPhone }}</a></p>
+        </div>
+
+        {% if request.message %}
+            <div style="background:#160a3a;border-radius:14px;padding:20px;margin-bottom:16px;">
+                <h2 style="font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:#ffd93d;margin:0 0 12px;">Message</h2>
+                <p style="margin:6px 0;white-space:pre-line;">{{ request.message }}</p>
+            </div>
+        {% endif %}
+
+        <p style="margin:24px 0 0;text-align:center;">
+            <a href="https://familygamescenter.fr/admin/b2b" style="display:inline-block;background:#ff2d87;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:bold;">
+                Ouvrir dans le back-office →
+            </a>
+        </p>
+    </div>
+</body>
+</html>

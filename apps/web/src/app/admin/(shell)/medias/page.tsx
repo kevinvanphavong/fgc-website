@@ -1,13 +1,7 @@
-import ComingSoon from '@/components/admin/ComingSoon';
+import MediasClient from '@/components/admin/medias/MediasClient';
 
 export const metadata = { title: 'Médias & affiches' };
 
 export default function AdminMediasPage() {
-  return (
-    <ComingSoon
-      title="Médias & affiches"
-      subtitle="Upload, bibliothèque images, recadrage."
-      pr="PR7 — feat/admin-clients-medias-users"
-    />
-  );
+  return <MediasClient />;
 }

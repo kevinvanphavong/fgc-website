@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import AdminProviders from '@/components/admin/AdminProviders';
 import AdminShell from '@/components/admin/shell/AdminShell';
 import { getCurrentUser } from '@/lib/admin-auth';
 import { getNotifications } from '@/lib/admin-api';
@@ -27,8 +28,10 @@ export default async function AdminLayout({
   const notifications = await getNotifications();
 
   return (
-    <AdminShell user={user} notifications={notifications}>
-      {children}
-    </AdminShell>
+    <AdminProviders>
+      <AdminShell user={user} notifications={notifications}>
+        {children}
+      </AdminShell>
+    </AdminProviders>
   );
 }

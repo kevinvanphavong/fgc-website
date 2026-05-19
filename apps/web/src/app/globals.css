@@ -107,6 +107,52 @@
   border-radius: 6px;
 }
 
+/* ------------------------------------------------------------------
+   Densité (PR8 — Tweaks panel). Pilotée par html[data-admin-density].
+   Compact = -2px sur les paddings principaux, font-size 13. Comfy = +2px,
+   font-size 15. Le style cible des sélecteurs Tailwind utility (py-X, p-X)
+   via variables CSS — pas de cascade hostile sur les composants.
+   ------------------------------------------------------------------ */
+html[data-admin-density='compact'] .admin-root {
+  font-size: 13px;
+  --admin-row-py: 0.25rem;
+  --admin-card-p: 0.75rem;
+}
+html[data-admin-density='regular'] .admin-root {
+  font-size: 14px;
+  --admin-row-py: 0.5rem;
+  --admin-card-p: 1rem;
+}
+html[data-admin-density='comfy'] .admin-root {
+  font-size: 15px;
+  --admin-row-py: 0.75rem;
+  --admin-card-p: 1.25rem;
+}
+
+/* Skip link — visible uniquement au focus clavier. */
+.admin-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: #5e2db8;
+  color: white;
+  font-weight: 500;
+  border-radius: 0 0 0.5rem 0;
+}
+.admin-skip-link:focus {
+  left: 0;
+}
+
+/* Animations cohérentes (PR8) — référence DS § 11. */
+.admin-root [data-admin-anim='hover'] {
+  transition: all 150ms ease;
+}
+.admin-root [data-admin-anim='drawer'] {
+  transition: transform 220ms ease;
+}
+
 @layer components {
   /* Section title — DS § 2.3 */
   .section-title {

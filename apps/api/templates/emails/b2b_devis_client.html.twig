@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Votre demande de devis — {{ request.reference }}</title>
+</head>
+<body style="margin:0;padding:24px;background:#160a3a;color:#fff4e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#3d1b6b;border-radius:18px;padding:32px;">
+        <h1 style="font-size:22px;margin:0 0 8px;color:#ffd93d;">
+            Demande bien reçue {{ request.contactFirstName }} 👋
+        </h1>
+        <p style="margin:0 0 24px;color:#fff4e0;opacity:.85;">
+            Référence : <strong style="color:#ff2d87;">{{ request.reference }}</strong>
+        </p>
+
+        <p style="margin:0 0 16px;line-height:1.6;">
+            Merci pour votre demande de devis pour <strong>{{ request.companyName }}</strong>.
+            Notre équipe revient vers vous <strong>sous 48h ouvrées</strong> pour affiner les détails
+            et vous envoyer une proposition chiffrée.
+        </p>
+
+        <div style="background:#160a3a;border-radius:14px;padding:20px;margin:24px 0;">
+            <h2 style="font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:#ffd93d;margin:0 0 12px;">Récapitulatif</h2>
+            <p style="margin:6px 0;"><strong>Type d'événement :</strong> {{ request.type.value }}</p>
+            <p style="margin:6px 0;"><strong>Participants attendus :</strong> {{ request.expectedAttendees }}</p>
+            {% if request.eventDate %}
+                <p style="margin:6px 0;"><strong>Date souhaitée :</strong> {{ request.eventDate|date('l d/m/Y') }}</p>
+            {% endif %}
+        </div>
+
+        <p style="margin:24px 0 0;line-height:1.6;">
+            Une question urgente ? Vous pouvez nous joindre directement au
+            <a href="tel:+33254741418" style="color:#00e5ff;">02 54 74 14 18</a>.
+        </p>
+
+        <p style="margin:24px 0 0;opacity:.7;font-size:13px;">
+            L'équipe Family Games Center · Blois
+        </p>
+    </div>
+</body>
+</html>

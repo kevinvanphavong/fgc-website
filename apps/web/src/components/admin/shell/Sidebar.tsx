@@ -9,6 +9,8 @@ import Avatar from '@/components/admin/ui/Avatar';
 import Icon from '@/components/admin/ui/Icon';
 import type { AdminUser } from '@/lib/admin-auth';
 import { cn } from '@/lib/cn';
+import { useReservationsStats } from '@/lib/admin-hooks/useDemandeReservation';
+import { useB2BStats } from '@/lib/admin-hooks/useB2BRequest';
 
 const ROLE_LABELS: Record<string, string> = {
   ROLE_ADMIN: 'Administrateur',
@@ -56,9 +58,31 @@ export default function Sidebar({ activeKey, collapsed, user }: SidebarProps) {
     ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`
     : user.email;
   const role = topRoleLabel(user.roles);
+  // Badge live sur "Réservations" : count des demandes en `nouveau`.
+  // Polling 60s + refetch sur focus (cf. useReservationsStats).
+  const { data: resaStats } = useReservationsStats();
+  const newReservations = resaStats?.byStatus.nouveau ?? 0;
+  // PR6 — count B2B `nouveau` pour badge "Demandes B2B".
+  const { data: b2bStats } = useB2BStats();
+  const newB2B = b2bStats?.byStage.nouveau ?? 0;
+
+  const isAdmin = user.roles.includes('ROLE_ADMIN');
+  const enrichedRoutes = ADMIN_ROUTES
+    // Item "Utilisateurs" caché aux non-admin (PR7) — l'API refuse aussi.
+    .filter((r) => r.key !== 'users' || isAdmin)
+    .map((r) => {
+      if (r.key === 'reservations' && newReservations > 0) {
+        return { ...r, badge: String(newReservations) };
+      }
+      if (r.key === 'b2b' && newB2B > 0) {
+        return { ...r, badge: String(newB2B) };
+      }
+      return r;
+    });
+
   const sections = ADMIN_SECTIONS.map((title) => ({
     title,
-    items: ADMIN_ROUTES.filter((r) => r.section === title),
+    items: enrichedRoutes.filter((r) => r.section === title),
   })).filter((s) => s.items.length > 0) as {
     title: AdminSectionTitle;
     items: typeof ADMIN_ROUTES;
@@ -136,7 +160,17 @@ export default function Sidebar({ activeKey, collapsed, user }: SidebarProps) {
                         <>
                           <span className="flex-1 truncate">{item.label}</span>
                           {item.badge ? (
-                            <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-admin-brand px-1.5 text-[0.6875rem] font-semibold text-white">
+                            <span
+                              className={cn(
+                                'inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[0.6875rem] font-semibold text-white',
+                                // Réservations B2C + Demandes B2B = rouge
+                                // (charge à traiter rapidement). Les autres
+                                // restent brand.
+                                item.key === 'reservations' || item.key === 'b2b'
+                                  ? 'bg-admin-red'
+                                  : 'bg-admin-brand',
+                              )}
+                            >
                               {item.badge}
                             </span>
                           ) : null}

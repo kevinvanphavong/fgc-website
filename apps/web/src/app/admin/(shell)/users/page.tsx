@@ -1,13 +1,15 @@
-import ComingSoon from '@/components/admin/ComingSoon';
+import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/lib/admin-auth';
+import UsersClient from '@/components/admin/users/UsersClient';
 
 export const metadata = { title: 'Utilisateurs & rôles' };
 
-export default function AdminUsersPage() {
-  return (
-    <ComingSoon
-      title="Utilisateurs & rôles"
-      subtitle="CRUD users, assignation des rôles (ROLE_ADMIN, ROLE_MANAGER, ROLE_STAFF)."
-      pr="PR7 — feat/admin-clients-medias-users"
-    />
-  );
+export default async function AdminUsersPage() {
+  const user = await getCurrentUser();
+  // Garde supplémentaire : seuls les admins voient cette page. Le sidebar
+  // masque déjà l'item, et l'API renvoie 403 — c'est la 3ᵉ couche de défense.
+  if (!user || !user.roles.includes('ROLE_ADMIN')) {
+    redirect('/admin');
+  }
+  return <UsersClient currentUserId={user.id} />;
 }

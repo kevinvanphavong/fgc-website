@@ -50,6 +50,8 @@ class MenuItem
     #[Groups(['menu:read', 'menu:write'])]
     private int $position = 0;
 
+    // category : non exposé en API. Le MenuItem s'édite via la collection
+    // `items` de MenuCategory (cascade persist). Cf. note sur MenuCategory::section.
     #[ORM\ManyToOne(targetEntity: MenuCategory::class, inversedBy: 'items')]
     #[ORM\JoinColumn(nullable: false)]
     private ?MenuCategory $category = null;
