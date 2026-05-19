@@ -16,6 +16,21 @@ framework:
             policy: 'fixed_window'
             limit: 3
             interval: '1 minute'
+        # Formulaire contact — POST : 3/min/IP.
+        contact_post:
+            policy: 'fixed_window'
+            limit: 3
+            interval: '1 minute'
+        # Inscription espace client — 5/h/IP (anti-spam, mais reste tolérant pour les familles partageant une IP NAT).
+        auth_register:
+            policy: 'fixed_window'
+            limit: 5
+            interval: '1 hour'
+        # Mot de passe oublié — 3/h/IP (pas la peine de spammer le mailer).
+        auth_forgot_password:
+            policy: 'fixed_window'
+            limit: 3
+            interval: '1 hour'
 
 # En test, on désactive les limites (plafond élevé) — sinon la suite full
 # tombe en 429 dès le 6e POST anniv. La logique métier (validation, conflit)
@@ -28,4 +43,10 @@ when@test:
             anniv_availability:
                 limit: 1000
             b2b_devis_post:
+                limit: 1000
+            contact_post:
+                limit: 1000
+            auth_register:
+                limit: 1000
+            auth_forgot_password:
                 limit: 1000

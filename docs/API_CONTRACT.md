@@ -77,6 +77,61 @@ Effet de bord : email transactionnel envoyé à `MAILER_FROM` avec template `tem
 
 ---
 
+### Contact (PR9 finitions)
+
+#### `POST /api/contact` — public
+
+Création d'un message contact via le formulaire `/contact`. **Rate limit** : 3/min/IP.
+
+**Payload** (`application/ld+json` ou `application/json`)
+```json
+{
+  "name": "Marie Martin",
+  "email": "marie@example.fr",
+  "phone": "06 12 34 56 78",
+  "subject": "tarifs",
+  "message": "Bonjour, question sur les tarifs groupes…",
+  "acceptRgpd": true
+}
+```
+
+**Validation** (DTO `ContactMessageInput`) :
+- `name` : `NotBlank`, `Length(1..120)`
+- `email` : `NotBlank`, `Email`, `Length(max=180)`
+- `phone` : optionnel, regex téléphone FR
+- `subject` : `Choice({anniv, b2b, tarifs, partenariat, autre})`
+- `message` : `NotBlank`, `Length(10..2000)`
+- `acceptRgpd` : `IsTrue`
+
+**Réponse 201** : `{ "@id": "...", "id": …, "reference": "FGC-CT-XXXXXX", "createdAt": "…" }`.
+**Codes erreur** : `422` (validation), `429` (rate limit).
+
+### Contact — endpoints admin (PR9 finitions)
+
+Tous protégés `ROLE_STAFF`.
+
+#### `GET /admin/contact-messages` — admin
+
+Listing JSON-LD paginé (25/page), tri `createdAt DESC`. Filtres : `status` (exact), `subject` (exact), `name` (partial), `email` (partial), `createdAt[after|before]`, `order[createdAt|status]`.
+
+#### `GET /admin/contact-messages/{id}` — admin
+
+Détail message (groupe `contact:admin:read`).
+
+#### `PATCH /admin/contact-messages/{id}` — admin
+
+Content-Type **obligatoire** : `application/merge-patch+json`. Édite uniquement `status` (machine d'état : `nouveau ↔ traite ↔ archive`, circulaire) + `adminNote`. Transition interdite → `422`.
+
+#### Cycle de vie (PR9 finitions)
+
+```
+nouveau ↔ traite ↔ archive
+```
+
+Circulaire pour permettre de rouvrir une archive ou retomber à `nouveau` si on a marqué traité par erreur. Centralisé dans `App\Enum\ContactMessageStatus::canTransitionTo()`.
+
+---
+
 ### Devis B2B (PR6)
 
 #### `POST /entreprises/devis` — public
@@ -664,6 +719,113 @@ Refuse en `422` :
 #### Sécurité — login bloqué si désactivé
 
 Le firewall `api_login` plugue `App\Security\AppUserChecker` qui rejette les comptes `enabled=false` avant la génération du JWT (login renvoie `401`). Aucune fenêtre de JWT exploitable pour un user désactivé.
+
+---
+
+### Espace client (PR11 + PR14)
+
+> Auth + profil + reservations agrégées d'un compte `ROLE_CLIENT`. JWT en cookie httpOnly `client_token` (7j, posé/effacé par les route handlers Next.js `/api/client/*`). Le backend Symfony émet le JWT via le firewall `json_login` existant — c'est le Next côté front qui décide quel cookie poser (admin vs client) selon le rôle dominant retourné.
+
+#### `POST /api/auth/register` — public
+
+Crée un compte client (`ROLE_CLIENT`, `enabled=true`). Rate-limit **5/h/IP** (`auth_register`).
+
+**Payload** :
+```json
+{
+  "email": "sophie@exemple.fr",
+  "password": "MotDePasse123",
+  "firstName": "Sophie",
+  "lastName": "Martin",
+  "phone": "06 12 34 56 78",
+  "acceptRgpd": true,
+  "acceptNewsletter": false
+}
+```
+
+**Règles password** : 10 caractères minimum, au moins une majuscule, au moins un chiffre. **`acceptRgpd: true` requis**. Phone optionnel mais regex FR si fourni.
+
+**Réponse 201** :
+```json
+{
+  "token": "eyJ0eXAi...",
+  "user": {
+    "id": 42, "email": "sophie@exemple.fr",
+    "firstName": "Sophie", "lastName": "Martin", "fullName": "Sophie Martin",
+    "phone": "06 12 34 56 78", "acceptNewsletter": false,
+    "createdAt": "2026-05-19T12:00:00+00:00",
+    "roles": ["ROLE_CLIENT", "ROLE_USER"]
+  }
+}
+```
+
+**Codes erreur** : `422` (validation, dont email déjà pris, RGPD non coché, password trop faible), `429` (rate limit).
+
+#### `POST /api/auth/forgot-password` — public
+
+Génère un token de réinitialisation 1h, envoie un mail si l'email existe & `enabled=true`. **Toujours 204** (no leak d'existence de compte). Rate-limit **3/h/IP** (`auth_forgot_password`).
+
+**Payload** : `{ "email": "sophie@exemple.fr" }`
+
+Le reset effectif passe par `POST /api/auth/reset-password` (endpoint PR7, partagé avec les invitations admin — réactive le compte si désactivé).
+
+#### `POST /api/auth/login` — public (mutualisé admin + client)
+
+Endpoint Symfony unique. Renvoie `{ token, user }`. La distinction admin/client se fait côté Next.js (`/api/admin/login` vérifie `ROLE_STAFF`, `/api/client/login` vérifie `ROLE_CLIENT`) avant de poser le cookie correspondant. Un user peut être logué admin ET client simultanément dans deux onglets.
+
+#### `GET /api/me` — ROLE_CLIENT
+
+Renvoie le profil du user connecté (mêmes champs que `user` du `register`).
+
+**Codes erreur** : `401` si pas de JWT, `403` si JWT staff (n'a pas `ROLE_CLIENT`).
+
+#### `PATCH /api/me` — ROLE_CLIENT, `application/merge-patch+json`
+
+Édite **firstName, lastName, phone, acceptNewsletter** uniquement. `email` non éditable en V1. `password` via endpoint dédié.
+
+**Payload** : `{ "firstName": "Léa", "phone": null }` (n'importe quel sous-ensemble).
+
+**Réponse 200** : profil mis à jour.
+**Codes erreur** : `415` (mauvais Content-Type), `422` (validation, ex. téléphone non FR).
+
+#### `POST /api/me/change-password` — ROLE_CLIENT
+
+**Payload** : `{ "currentPassword": "...", "newPassword": "..." }`.
+Réponse `{ ok: true }`.
+**Codes erreur** : `422` si current incorrect OU si new ne passe pas les règles (10+1maj+1chiffre).
+
+#### `DELETE /api/me` — ROLE_CLIENT
+
+**Anonymisation** (pas de hard delete) : email → `deleted-{id}@deleted.fgc`, firstName/lastName/phone effacés, `enabled=false`. Les réservations rattachées **gardent l'email d'origine** côté `parentEmail`/`contactEmail` pour traçabilité métier (intérêt légitime de conservation comptable, choix Mr Vong).
+
+#### `GET /api/me/reservations?page=N` — ROLE_CLIENT
+
+Agrège `DemandeReservation` + `B2BRequest` qui matchent `user_id` OU `parentEmail`/`contactEmail` = email user (lower). Tri eventDate DESC, createdAt DESC en tie-break. Pagination 25/page.
+
+**Réponse 200** :
+```json
+{
+  "items": [
+    { "kind": "anniv", "id": 12, "reference": "FGC-XYZ123",
+      "status": "confirme", "statusLabel": "Confirmé",
+      "eventDate": "2026-06-14", "timeSlot": "14:00",
+      "summary": "Anniversaire de Léa · 12 enfants · Superbowler",
+      "totalCents": 30000,
+      "createdAt": "2026-05-19T10:00:00+00:00" },
+    { "kind": "b2b", "id": 5, "reference": "FGC-B2B-ABC456",
+      "status": "devis_envoye", "statusLabel": "Devis envoyé",
+      "eventDate": "2026-12-15", "timeSlot": null,
+      "summary": "TPME · seminaire · 40 personnes",
+      "totalCents": 250000,
+      "createdAt": "2026-05-10T08:30:00+00:00" }
+  ],
+  "total": 2, "page": 1, "perPage": 25
+}
+```
+
+#### Stamping `userId` automatique sur tunnel/B2B
+
+Quand un client connecté soumet `POST /reservations/anniversaire` ou `POST /entreprises/devis` **via le proxy Next `/api/client/proxy/*`** (qui ajoute le Bearer), le backend lit `Security::getUser()` et stamp `DemandeReservation.user_id` / `B2BRequest.user_id`. Le flow anonyme reste inchangé pour les visiteurs non connectés (cookie absent → POST direct sans Bearer).
 
 ---
 

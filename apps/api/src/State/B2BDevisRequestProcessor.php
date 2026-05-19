@@ -6,11 +6,13 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Dto\B2BDevisRequestInput;
 use App\Entity\B2BRequest;
+use App\Entity\User;
 use App\Enum\B2BStage;
 use App\Enum\B2BType;
 use App\Service\B2BDevisMailer;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
@@ -31,6 +33,7 @@ final class B2BDevisRequestProcessor implements ProcessorInterface
         private readonly RequestStack $requestStack,
         #[Autowire(service: 'limiter.b2b_devis_post')]
         private readonly RateLimiterFactory $postLimiter,
+        private readonly Security $security,
     ) {
     }
 
@@ -66,6 +69,12 @@ final class B2BDevisRequestProcessor implements ProcessorInterface
             ->setExpectedAttendees($data->expectedAttendees)
             ->setMessage($data->message ?: null)
             ->setAcceptRgpd($data->acceptRgpd);
+
+        // Rattachement à un compte client connecté.
+        $authUser = $this->security->getUser();
+        if ($authUser instanceof User && $authUser->isClient()) {
+            $b2b->setUser($authUser);
+        }
 
         $this->em->persist($b2b);
         $this->em->flush();

@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { NAV, RESERVATION_URL, type NavItem, type NavGroup } from '@/lib/nav';
 import { cn } from '@/lib/cn';
+import HeaderUserMenu from './HeaderUserMenu';
+import type { ClientUser } from '@/lib/use-client';
 
 function isGroup(item: NavItem): item is NavGroup {
   return 'children' in item;
@@ -15,7 +17,11 @@ function isActive(href: string, pathname: string) {
   return pathname.startsWith(href);
 }
 
-export default function Header() {
+interface HeaderProps {
+  initialUser?: ClientUser | null;
+}
+
+export default function Header({ initialUser = null }: HeaderProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
@@ -161,6 +167,7 @@ export default function Header() {
 
         {/* CTA desktop + burger */}
         <div className="flex items-center gap-2.5">
+          <HeaderUserMenu initialUser={initialUser} />
           <Link
             href="/reserver-anniversaire"
             className="hidden items-center gap-2 rounded-full border-2 border-fgc-pink-shadow bg-fgc-pink-hot px-4 py-3 font-display text-[0.92rem] uppercase text-white shadow-fgc-btn-pink transition-transform hover:-translate-y-0.5 active:translate-y-px md:inline-flex"

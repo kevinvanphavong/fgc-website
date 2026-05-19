@@ -10,6 +10,7 @@ parameters:
     mailer_default_from_name: 'Family Games Center'
     mailer_default_reservations: 'contact@familygamescenter.fr'
     admin_setup_url_default: 'http://localhost:3000/admin/setup-password'
+    client_reset_url_default: 'http://localhost:3000/mot-de-passe-oublie/reset'
 
     # `default:<param>:<ENV>` → utilise le param ci-dessus si l'env est absente.
     mailer.from_address: '%env(default:mailer_default_from:MAILER_FROM)%'

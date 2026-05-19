@@ -8,11 +8,13 @@ use ApiPlatform\Validator\Exception\ValidationException;
 use App\Dto\BirthdayReservationInput;
 use App\Entity\AnnivCard;
 use App\Entity\DemandeReservation;
+use App\Entity\User;
 use App\Enum\DemandeReservationStatus;
 use App\Repository\DemandeReservationRepository;
 use App\Service\BirthdayReservationMailer;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -37,6 +39,7 @@ final class BirthdayReservationProcessor implements ProcessorInterface
         private readonly RequestStack $requestStack,
         #[Autowire(service: 'limiter.anniv_post')]
         private readonly RateLimiterFactory $postLimiter,
+        private readonly Security $security,
     ) {
     }
 
@@ -103,6 +106,12 @@ final class BirthdayReservationProcessor implements ProcessorInterface
             ->setAcceptNewsletter($data->acceptNewsletter)
             ->setUpsellVR($data->upsellVR)
             ->setUnitPriceCentsSnapshot($formule->getUnitPriceCents());
+
+        // Rattachement à un compte client connecté (cookie client_token forwardé).
+        $authUser = $this->security->getUser();
+        if ($authUser instanceof User && $authUser->isClient()) {
+            $reservation->setUser($authUser);
+        }
 
         $this->em->persist($reservation);
         $this->em->flush();

@@ -164,4 +164,29 @@ public function testSomething(string $arg): void { ... }
 
 ---
 
+## 9. Symfony — `access_control` regex préfixe peut matcher des entités voisines
+
+**Symptôme** : tous les endpoints `/api/menu_sections`, `/api/menu_categories`, `/api/menu_items` se mettent à renvoyer 403 alors qu'on n'a touché à aucune entité Menu. Côté tests : `MenuSectionTest`, `MenuCategoryTest`, `MenuItemTest`, `ProxyAdminTest` cassent simultanément.
+
+**Cause** : on a ajouté une règle `access_control` pour protéger l'espace client :
+
+```yaml
+- { path: ^/api/me, roles: ROLE_CLIENT }
+```
+
+Le regex `^/api/me` matche **aussi** `/api/menu_*` (le préfixe `me` est inclus dans `menu`). Les requêtes admin staff aux endpoints `/api/menu_sections` se retrouvent à demander `ROLE_CLIENT` qu'aucun staff n'a → 403.
+
+**Fix** : ancrer le segment avec `(/|$)` :
+
+```yaml
+- { path: ^/api/me(/|$), roles: ROLE_CLIENT }
+```
+
+Couvre `/api/me`, `/api/me/`, `/api/me/reservations`, `/api/me/change-password` — sans matcher `/api/menu_*`.
+
+**Rencontré en** : PR11 (espace client). 11 tests cassent en cascade jusqu'à comprendre que ce n'est pas un problème de rôle mais de regex.
+**Quand appliquer** : à chaque nouvelle règle `access_control` dont le path est un préfixe court (`me`, `b2b`, `vr`, etc.). Si tu ajoutes un path court, mets toujours l'ancre `(/|$)` ou utilise une regex plus précise (`^/api/me/`, mais alors `/api/me` tout court n'est plus protégé — préfère `(/|$)`).
+
+---
+
 *Fin GOTCHAS.md*

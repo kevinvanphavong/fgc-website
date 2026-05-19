@@ -42,9 +42,13 @@ security:
     access_control:
         - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth, roles: ROLE_STAFF }
         - { path: ^/api/admin/users, roles: ROLE_ADMIN }
         - { path: ^/api/admin, roles: ROLE_STAFF }
+        # `^/api/me(/|$)` indispensable : `^/api/me` matcherait aussi `/api/menu_sections` (préfixe).
+        - { path: ^/api/me(/|$), roles: ROLE_CLIENT }
         - { path: ^/api, roles: PUBLIC_ACCESS }
 
 when@test:

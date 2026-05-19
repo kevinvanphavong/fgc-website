@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import InfoStrip from './InfoStrip';
+import ManageCookiesLink from './ManageCookiesLink';
 
 const PHONE = process.env.NEXT_PUBLIC_PHONE ?? '02 54 74 85 21';
 const EMAIL = process.env.NEXT_PUBLIC_EMAIL ?? 'contact@familygamescenter.fr';
@@ -31,8 +32,10 @@ const FOOTER_LINKS = {
   legal: {
     title: 'Légal',
     links: [
-      { label: 'Mentions légales', href: '/mentions-legales' },
-      { label: 'Politique de confidentialité', href: '/confidentialite' },
+      { label: 'Mentions légales', href: '/legal/mentions-legales' },
+      { label: 'CGV', href: '/legal/cgv' },
+      { label: 'Politique de confidentialité', href: '/legal/politique-confidentialite' },
+      { label: 'Cookies', href: '/legal/cookies' },
     ],
   },
 };
@@ -145,11 +148,12 @@ export default function Footer() {
         </div>
 
         {/* Footer bottom */}
-        <div className="wrap border-t border-dashed border-fgc-cream/20 py-5">
-          <p className="text-center text-[0.85rem] text-fgc-cream/[0.65]">
+        <div className="wrap flex flex-col items-center justify-between gap-2 border-t border-dashed border-fgc-cream/20 py-5 md:flex-row">
+          <p className="text-center text-[0.85rem] text-fgc-cream/[0.65] md:text-left">
             © {new Date().getFullYear()} Family Games Center — Bowling de Blois.
             Tous droits réservés.
           </p>
+          <ManageCookiesLink />
         </div>
       </div>
     </footer>

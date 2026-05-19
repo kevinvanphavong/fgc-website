@@ -11,6 +11,7 @@ import type { AdminUser } from '@/lib/admin-auth';
 import { cn } from '@/lib/cn';
 import { useReservationsStats } from '@/lib/admin-hooks/useDemandeReservation';
 import { useB2BStats } from '@/lib/admin-hooks/useB2BRequest';
+import { useMessagesNewCount } from '@/lib/admin-hooks/useContactMessages';
 
 const ROLE_LABELS: Record<string, string> = {
   ROLE_ADMIN: 'Administrateur',
@@ -65,6 +66,8 @@ export default function Sidebar({ activeKey, collapsed, user }: SidebarProps) {
   // PR6 — count B2B `nouveau` pour badge "Demandes B2B".
   const { data: b2bStats } = useB2BStats();
   const newB2B = b2bStats?.byStage.nouveau ?? 0;
+  // PR9 finitions — badge messages contact.
+  const { data: newMessages = 0 } = useMessagesNewCount();
 
   const isAdmin = user.roles.includes('ROLE_ADMIN');
   const enrichedRoutes = ADMIN_ROUTES
@@ -76,6 +79,9 @@ export default function Sidebar({ activeKey, collapsed, user }: SidebarProps) {
       }
       if (r.key === 'b2b' && newB2B > 0) {
         return { ...r, badge: String(newB2B) };
+      }
+      if (r.key === 'messages' && newMessages > 0) {
+        return { ...r, badge: String(newMessages) };
       }
       return r;
     });
@@ -163,10 +169,10 @@ export default function Sidebar({ activeKey, collapsed, user }: SidebarProps) {
                             <span
                               className={cn(
                                 'inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[0.6875rem] font-semibold text-white',
-                                // Réservations B2C + Demandes B2B = rouge
+                                // Réservations B2C + Demandes B2B + Messages = rouge
                                 // (charge à traiter rapidement). Les autres
                                 // restent brand.
-                                item.key === 'reservations' || item.key === 'b2b'
+                                item.key === 'reservations' || item.key === 'b2b' || item.key === 'messages'
                                   ? 'bg-admin-red'
                                   : 'bg-admin-brand',
                               )}

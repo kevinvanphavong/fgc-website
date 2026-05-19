@@ -7,6 +7,7 @@ import {
   Layers,
   Image as ImageIcon,
   Shield,
+  Mail,
 } from 'lucide-react';
 
 export type AdminSectionTitle = 'Pilotage' | 'Site web' | 'Réglages';
@@ -28,6 +29,7 @@ export const ADMIN_ROUTES: AdminRoute[] = [
   { key: 'dashboard', label: 'Dashboard', href: '/admin', icon: Home, section: 'Pilotage' },
   { key: 'reservations', label: 'Réservations B2C', href: '/admin/reservations', icon: Calendar, section: 'Pilotage' },
   { key: 'b2b', label: 'Demandes B2B', href: '/admin/b2b', icon: Briefcase, section: 'Pilotage' },
+  { key: 'messages', label: 'Messages contact', href: '/admin/messages', icon: Mail, section: 'Pilotage' },
   { key: 'clients', label: 'Clients', href: '/admin/clients', icon: Users, section: 'Pilotage' },
   { key: 'contenus', label: 'Contenus du site', href: '/admin/contenus', icon: Layers, section: 'Site web' },
   { key: 'medias', label: 'Médias & affiches', href: '/admin/medias', icon: ImageIcon, section: 'Site web' },

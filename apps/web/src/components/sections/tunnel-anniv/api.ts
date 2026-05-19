@@ -26,6 +26,7 @@ export interface SubmitInput {
 
 export async function submitReservation(
   draft: TunnelDraft,
+  options: { authenticated?: boolean } = {},
 ): Promise<ReservationConfirmation> {
   if (
     !draft.formuleKey
@@ -37,27 +38,44 @@ export async function submitReservation(
     throw new Error('Brouillon incomplet — étapes manquantes.');
   }
 
+  const payload = {
+    formuleKey: draft.formuleKey,
+    eventDate: draft.date,
+    timeSlot: draft.timeSlot,
+    childName: draft.childName.trim(),
+    childAge: draft.childAge,
+    kidsCount: draft.kidsCount,
+    cakeNote: draft.cakeNote.trim() || null,
+    allergies: draft.allergies.trim() || null,
+    parentFirstName: draft.parentFirstName.trim(),
+    parentLastName: draft.parentLastName.trim(),
+    parentEmail: draft.parentEmail.trim(),
+    parentPhone: draft.parentPhone.trim(),
+    source: draft.source || null,
+    message: draft.message.trim() || null,
+    acceptCGV: draft.acceptCGV,
+    acceptNewsletter: draft.acceptNewsletter,
+    upsellVR: draft.upsellVR,
+  };
+
+  // Si client connecté → proxy Next qui injecte le JWT, pour stamping userId backend.
+  if (options.authenticated) {
+    const r = await fetch('/api/client/proxy/reservations/anniversaire', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/ld+json',
+        Accept: 'application/ld+json,application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw new ApiError(r.status, body);
+    return body as ReservationConfirmation;
+  }
+
   return api<ReservationConfirmation>('/reservations/anniversaire', {
     method: 'POST',
-    json: {
-      formuleKey: draft.formuleKey,
-      eventDate: draft.date,
-      timeSlot: draft.timeSlot,
-      childName: draft.childName.trim(),
-      childAge: draft.childAge,
-      kidsCount: draft.kidsCount,
-      cakeNote: draft.cakeNote.trim() || null,
-      allergies: draft.allergies.trim() || null,
-      parentFirstName: draft.parentFirstName.trim(),
-      parentLastName: draft.parentLastName.trim(),
-      parentEmail: draft.parentEmail.trim(),
-      parentPhone: draft.parentPhone.trim(),
-      source: draft.source || null,
-      message: draft.message.trim() || null,
-      acceptCGV: draft.acceptCGV,
-      acceptNewsletter: draft.acceptNewsletter,
-      upsellVR: draft.upsellVR,
-    },
+    json: payload,
   });
 }
 

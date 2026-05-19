@@ -4,6 +4,74 @@
 
 ## 2026-05-19
 
+- **`main`** — `feat(api,web)`: espace client public — auth + profil + mes réservations (PR11 + PR14).
+  - **API** :
+    - Rôle `ROLE_CLIENT` ajouté à `User` (constant + helpers `isClient()` / `isStaff()`), **indépendant** des rôles staff (un STAFF n'est PAS client par défaut, et inversement). Pas de `role_hierarchy` croisée.
+    - Migration `Version20260519120000` : `app_user.phone` + `app_user.accept_newsletter`, FK nullable `demande_reservation.user_id` + `b2b_request.user_id` (onDelete SET NULL).
+    - Endpoints publics :
+      - `POST /api/auth/register` — DTO `RegisterClientInput` (email/password 10+1maj+1chiffre/firstName/lastName/phone optionnel FR/acceptRgpd true/acceptNewsletter). Crée user `ROLE_CLIENT` enabled=true, mail bienvenue best-effort, renvoie JWT direct 201. Rate-limit `auth_register` 5/h/IP.
+      - `POST /api/auth/forgot-password` — toujours 204 (no leak d'existence), génère token 1h + mail si user existe + enabled. Rate-limit `auth_forgot_password` 3/h/IP. Réutilise `User.resetToken` + endpoint `/api/auth/reset-password` existant (PR7).
+    - Endpoints client connecté (`MeController`, `IsGranted('ROLE_CLIENT')`) :
+      - `GET /api/me` — profil.
+      - `PATCH /api/me` (merge-patch+json) — édite firstName/lastName/phone/acceptNewsletter uniquement. **Pas l'email** (V2 avec re-vérif). Validation regex FR sur phone.
+      - `POST /api/me/change-password` — `{ currentPassword, newPassword }`, 422 si current incorrect ou new ne passe pas les règles.
+      - `DELETE /api/me` — **anonymise** : email → `deleted-{id}@deleted.fgc`, vide firstName/lastName/phone, `enabled=false`. Ne touche pas aux résa rattachées (l'email d'origine reste figé côté `DemandeReservation.parentEmail` pour traçabilité métier).
+      - `GET /api/me/reservations` — agrège `DemandeReservation` + `B2BRequest` matchés sur `user_id` OU `parentEmail`/`contactEmail` (lower) = email user. Payload unifié `{ kind, reference, status, statusLabel, eventDate, summary, totalCents }`, tri eventDate DESC + createdAt DESC. Pagination 25/page.
+    - **Stamping `userId` automatique** : `BirthdayReservationProcessor` + `B2BDevisRequestProcessor` consultent `Security::getUser()` à l'INSERT et stampent `User` si `ROLE_CLIENT` connecté (cookie `client_token` forwardé via proxy Next).
+    - `security.yaml` : nouvelles règles `^/api/auth/register` + `^/api/auth/forgot-password` PUBLIC, `^/api/me(/|$)` ROLE_CLIENT. **⚠ Gotcha** : `^/api/me` sans `(/|$)` matchait `/api/menu_sections` (préfixe) → bug corrigé pendant l'implémentation (cf. GOTCHAS #9 ajouté).
+    - Service `ClientWelcomeMailer` + 2 templates Twig (bienvenue + reset mot de passe).
+    - **Tests** `AuthClientTest` — 12 scénarios (register OK, rgpd false 422, email dupliqué 422, login client JWT, /me 401/200, PATCH /me, change-password current incorrect/valid, forgot-password toujours 204, delete anonymise, /me/reservations match par email). **Suite full : 120 tests, 358 assertions, 6 skipped, 0 failure.**
+  - **Web** :
+    - **Pages publiques** dans `(public)/` : `/connexion`, `/inscription`, `/mot-de-passe-oublie` — RHF + zodResolver miroir Assert PHP, redirect `/compte` si déjà connecté (vérifié RSC via `getCurrentClient`). Le formulaire de mot de passe oublié confirme toujours sans révéler l'existence du compte.
+    - **Espace client `/compte/*`** (route group dédié `(client)/` — **pas** de violet admin, **uniquement** tokens DS public, Header/Footer/CookieBanner identiques au site public, dupliqués dans le layout puisque les route groups Next.js ne partagent pas leurs layouts) :
+      - `(client)/compte/layout.tsx` : RSC qui vérifie `client_token` → redirect `/connexion?next=...` sinon. Pose Header public + Footer public + CookieBanner + `<ClientShell>` (sous-nav horizontale tokenisée "Mon profil / Mes réservations / Déconnexion").
+      - `/compte` — header carte avatar gradient (initiales colorées, palette FGC), section "Mes informations" édit inline (RHF + autosave 800ms via PATCH), section "Mot de passe" (modale current+new+confirm), section danger "Supprimer mon compte" (modale avec garde "tapez SUPPRIMER", mention conservation anonymisée des résa).
+      - `/compte/reservations` — cards mélangées anniv (🎂) + B2B (💼), statut pill cohérent couleurs site, modale détails read-only. Empty state CTA jaune vers tunnel anniv.
+    - **Header** : prop `initialUser` (rempli par RSC layout via `getCurrentClient`) → `<HeaderUserMenu>` client component qui affiche avatar initiales + menu dropdown (Mon profil / Mes réservations / Déconnexion) si connecté, ou bouton discret "Se connecter" sinon. Hydratation cohérente sans flash.
+    - **Hook `useClient()`** (`lib/use-client.ts`, client-side) + helpers serveur (`lib/client-auth.ts`, server-only) séparés. React Query clé `['client', 'me']` partagée. Mutations : login, register, logout, updateMe, changePassword, deleteMe, forgotPassword.
+    - **Next.js route handlers** sous `/api/client/*` :
+      - `login`, `register`, `logout`, `forgot-password` — équivalents du flow admin (pose/efface le cookie `client_token` httpOnly Secure SameSite=Lax, 7j).
+      - `proxy/[...path]` — proxy qui injecte le Bearer JWT depuis le cookie. Couvre `/me`, `/me/reservations`, `/me/change-password`, et **aussi** les POST publics tunnel anniv + B2B quand le user est connecté (pour stamping `userId` côté backend).
+    - **Middleware Next.js** fusionné `[/admin/:path*, /compte/:path*]` : branching par segment de path, indépendant entre les deux périmètres (admin redirige `/admin/login`, compte redirige `/connexion`).
+    - **Pré-remplissage tunnel anniv + form B2B** : si client connecté, banner vert "✓ Connecté en tant que [Prénom]. Vos infos sont pré-remplies." en haut du form/Step4. Auto-fill firstName/lastName/email/phone si encore vides du draft (ne pas écraser une saisie en cours). Le POST passe par `/api/client/proxy/*` (avec Bearer) au lieu de `/api/*` direct → backend stamp `userId`. Le flow anonyme reste fonctionnel sans imposer la connexion.
+    - **`(public)/layout.tsx`** : wrap par `<ClientProviders>` (QueryClient dédié espace client, distinct du QueryClient admin) + récupère `initialUser` RSC. `app/not-found.tsx` aussi wrappé.
+  - **Décisions clés** :
+    - **Login unique** `/api/auth/login` Symfony, distinction côté Next : `/api/admin/login` pose `admin_token`, `/api/client/login` pose `client_token` après vérif `ROLE_CLIENT`. Un user peut être logué admin ET client simultanément dans deux onglets.
+    - **TTL JWT** : 7j pour les deux (comportement actuel Lexik, non changé). Le prompt suggérait 7j client vs 1h admin — V2 si justifié (nécessite config Lexik per-role).
+    - **Anonymisation à la suppression** : choix V1 = on touche uniquement à `User` (email pseudonymisé + enabled=false), on **ne modifie pas** les résa rattachées (intérêt légitime de conservation comptable, traçabilité métier). Plus simple, juridiquement défendable.
+    - **Match rétroactif par email** : une résa créée anonyme avec un email donné apparaît dans `/compte/reservations` après inscription avec ce même email — pas seulement les résa stampées via cookie.
+  - **Auto-vérification** :
+    - `php bin/phpunit` → **120 tests, 358 assertions, 6 skipped, 0 failure**.
+    - `npm run build` → 0 erreur TS. Nouvelles routes : `/connexion` 3.23 kB, `/inscription` 4.13 kB, `/mot-de-passe-oublie` 3.03 kB, `/compte` 5.17 kB, `/compte/reservations` 3.71 kB.
+  - **Différé V2** : vérification email à l'inscription (token signé), édition email avec re-vérif, 2FA/OAuth, export RGPD JSON, notifications in-app sur changement de statut résa, annulation depuis le compte client, conversion ROLE_STAFF↔ROLE_CLIENT.
+
+- **`main`** — `feat(api,web)`: finitions site public — Contact branché, pages légales, SEO de base, 404 (PR9 finitions).
+  - **API** :
+    - Nouvelle entité `ContactMessage` (table `contact_message`, index `(status, created_at)`) avec enums `ContactSubject` (anniv/b2b/tarifs/partenariat/autre) et `ContactMessageStatus` (nouveau/traite/archive — machine d'état circulaire pour permettre les corrections). Migration `Version20260519010935`.
+    - DTO `ContactMessageInput` + `ContactMessageProcessor` (rate limit `contact_post` 3/min/IP) + `AdminContactMessageProcessor` (validation transitions via `canTransitionTo()`).
+    - 4 operations ApiResource : `POST /api/contact` (public, uriTemplate explicite — gotcha #6), `GET /admin/contact-messages` (SearchFilter status/subject/name/email, DateFilter, OrderFilter, 25/page), `GET /admin/contact-messages/{id}`, `PATCH` (merge-patch — édite status + adminNote).
+    - Service `ContactMessageMailer` + 2 templates Twig (admin notification + accusé client, best-effort).
+    - `ContactMessageFixtures` — 3 messages (1 par statut).
+    - **Tests** `ContactPublicTest` — 6 scénarios : 201 nominal, 422 rgpd, 422 subject invalide, 422 message trop court, 401 admin sans token, PATCH transition. **Suite full : 108 tests, 325 assertions, 6 skipped, 0 failure.**
+  - **Web** :
+    - **Formulaire `/contact` branché** : refactoré en client component `<ContactForm>` (RHF + zodResolver miroir Assert PHP — name/email/phone optionnel FR/subject 5 choix/message 10-2000/acceptRgpd). 201 → confirmation inline avec référence FGC-CT-XXXXXX. 4xx → toast + violations champ par champ.
+    - **Page admin `/admin/messages`** : entrée sidebar discrète (`Mail` icon) sous "Demandes B2B", tableau date/nom/sujet/statut+pill/preview, drawer 520px (coordonnées + message complet + boutons transitions + note autosave 800ms). Badge sidebar rouge live (`useMessagesNewCount` polling 60s). Module le plus minimal du back-office (volume faible).
+    - **4 pages légales statiques** dans `(public)/legal/` : mentions-legales, cgv, politique-confidentialite, cookies. Shell partagé `<LegalPageShell>` avec encart non-négociable "⚠️ Document de démonstration — à valider par avocat / DPO avant publication officielle". Contenu réaliste : CGV reprend l'acompte 50€ et annulation J-7 du tunnel anniv (cohérence), politique de confidentialité liste les vraies données collectées par les formulaires actifs avec durées (3 ans prospects, 10 ans comptable), cookies = `admin_token` uniquement en V1.
+    - **`<CookieBanner>`** : slide-in bas non-bloquant, opt-in granulaire (Nécessaire toujours actif, Analytics + Marketing désactivés par défaut), boutons "Tout accepter / Tout refuser / Personnaliser". Persistance `localStorage` clé `fgc.cookies.consent` + timestamp, re-demande après 13 mois (norme CNIL). Event `window.dispatchEvent(new Event('fgc:open-cookies'))` pour ré-ouverture depuis le footer.
+    - **Footer enrichi** : section légale étendue (Mentions / CGV / Confidentialité / Cookies pointant vers `/legal/*`) + lien "Gérer mes cookies" (client component dédié `ManageCookiesLink` pour rester compatible avec le Footer server component).
+    - **Liens RGPD** du tunnel anniv (Step4) et du form B2B mis à jour : pointent désormais vers `/legal/cgv` et `/legal/politique-confidentialite` (avant : `/cgv` et "RGPD inline" sans lien).
+    - **SEO base** :
+      - Root layout — metadata enrichie : title plus descriptif, OpenGraph avec image fallback (`/assets/affiche-carte-membre.png`), Twitter Card `summary_large_image`, `robots: { index: true, follow: true }`.
+      - `app/sitemap.ts` — sitemap dynamique listant 19 routes publiques avec priorités logiques (home 1.0, anniv 0.9, activités 0.8, légal 0.3), `changeFrequency` weekly/monthly/yearly.
+      - `app/robots.ts` — `User-agent: *`, allow `/`, disallow `/admin/` + `/api/`, lien sitemap.
+      - `<LocalBusinessJsonLd>` injecté sur la home — schema.org `EntertainmentBusiness` complet (nom, adresse, géo coords Blois, openingHoursSpecification 7J/7, priceRange €€, sameAs Facebook/Instagram).
+    - **Page 404 publique** : root-level `app/not-found.tsx` (les routes inconnues à la racine ne sont pas capturées par le route-group `(public)`, donc on duplique le wrapper Header+Footer+CookieBanner). Illustration 🎳, CTAs "Retour à l'accueil" + "Voir nos activités", lien contact. Une variante `(public)/not-found.tsx` couvre les routes inconnues dans le group.
+  - **Auto-vérification** :
+    - `make test-api` → **108 tests, 325 assertions, 0 failure** (+6 tests Contact).
+    - `npm run build` → 0 erreur TS. Nouvelles routes : `/contact` 5.79 kB, `/admin/messages` 6.18 kB, `/legal/*` 4 routes statiques 197 B, `/sitemap.xml` + `/robots.txt`.
+    - Smoke curl public : POST `/api/contact` nominal → 201 + `FGC-CT-MLL692`. `acceptRgpd: false` → 422. `/api/admin/contact-messages` sans token → 401.
+  - **Différé V2** : espace client `/connexion`/`/compte` (PR11+PR14), opt-in scripts conditionnels (quand analytics branchés), sitemap dynamique BDD, PWA/Service Worker.
+
 - **`main`** — `feat(admin,web)`: polish back-office — Cmd+K, Tweaks panel, raccourcis clavier, A11y, responsive, 404 (PR8).
   - **Cmd+K Command Palette** (`components/admin/cmdk/CommandPalette.tsx`) : modal ⌘K/Ctrl+K, 5 sections (Aller à, Actions, Réservations, Demandes B2B, Clients). Recherche fuzzy via `fuse.js` (~5 kb, ajouté en dep). Navigation ↑↓/Enter/Esc, item actif fond brand-soft. Sélection résa/B2B/client → `router.push` avec `?open={id}` (lecture côté pages laissée optionnelle pour V2). Items "Actions V2" (créer résa manuelle, exporter CSV) visibles désactivés avec hint "V2". Charge 30 résa + 30 B2B + clients page 1 au premier open (pas de polling).
   - **Tweaks Panel** (`components/admin/tweaks/TweaksPanel.tsx` + `lib/admin-tweaks.ts`) : toggle ⌘./Ctrl+. + bouton flottant bas-droite + close ⌘./Esc. 3 réglages persistés `localStorage` clé `fgc.admin.tweaks` :

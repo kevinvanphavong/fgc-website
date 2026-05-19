@@ -15,6 +15,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const ROLE_STAFF = 'ROLE_STAFF';
     public const ROLE_MANAGER = 'ROLE_MANAGER';
     public const ROLE_ADMIN = 'ROLE_ADMIN';
+    /** Espace client public (parents anniv + contacts B2B). Indépendant des rôles staff. */
+    public const ROLE_CLIENT = 'ROLE_CLIENT';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -36,6 +38,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 80, nullable: true)]
     private ?string $lastName = null;
+
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $phone = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $acceptNewsletter = false;
 
     /** Gradient CSS consommé par <Avatar /> côté Next. */
     #[ORM\Column(length: 120, nullable: true)]
@@ -93,6 +101,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getLastName(): ?string { return $this->lastName; }
     public function setLastName(?string $v): static { $this->lastName = $v; return $this; }
+
+    public function getPhone(): ?string { return $this->phone; }
+    public function setPhone(?string $v): static { $this->phone = $v; return $this; }
+
+    public function isAcceptNewsletter(): bool { return $this->acceptNewsletter; }
+    public function setAcceptNewsletter(bool $v): static { $this->acceptNewsletter = $v; return $this; }
+
+    public function isClient(): bool { return in_array(self::ROLE_CLIENT, $this->roles, true); }
+    public function isStaff(): bool
+    {
+        return in_array(self::ROLE_STAFF, $this->roles, true)
+            || in_array(self::ROLE_MANAGER, $this->roles, true)
+            || in_array(self::ROLE_ADMIN, $this->roles, true);
+    }
 
     public function getAvatarColor(): ?string { return $this->avatarColor; }
     public function setAvatarColor(?string $v): static { $this->avatarColor = $v; return $this; }

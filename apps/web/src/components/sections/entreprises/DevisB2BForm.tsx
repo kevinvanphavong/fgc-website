@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api, ApiError } from '@/lib/api';
+import { useClient } from '@/lib/use-client';
 
 const TYPE_OPTIONS = [
   { value: 'team_building', label: 'Team Building' },
@@ -65,11 +66,13 @@ interface ApiViolation {
 export default function DevisB2BForm() {
   const [confirmation, setConfirmation] = useState<ConfirmationState | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+  const { user } = useClient();
 
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
     reset,
   } = useForm<FormValues>({
@@ -88,17 +91,41 @@ export default function DevisB2BForm() {
     },
   });
 
+  // Pré-remplit les coordonnées contact quand un client est connecté.
+  useEffect(() => {
+    if (!user) return;
+    if (user.firstName) setValue('contactFirstName', user.firstName);
+    if (user.lastName) setValue('contactLastName', user.lastName);
+    if (user.email) setValue('contactEmail', user.email);
+    if (user.phone) setValue('contactPhone', user.phone);
+  }, [user, setValue]);
+
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
-      const res = await api<{ reference: string }>('/entreprises/devis', {
-        method: 'POST',
-        json: {
-          ...values,
-          eventDate: values.eventDate || null,
-          message: values.message || null,
-        },
-      });
+      // Si user client connecté → POST via le proxy Next (qui injecte le JWT)
+      // afin que le backend stamp `B2BRequest.userId`. Sinon, POST anonyme direct.
+      const payload = {
+        ...values,
+        eventDate: values.eventDate || null,
+        message: values.message || null,
+      };
+      let res: { reference: string };
+      if (user) {
+        const r = await fetch('/api/client/proxy/entreprises/devis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/ld+json', Accept: 'application/ld+json,application/json' },
+          body: JSON.stringify(payload),
+        });
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) throw new ApiError(r.status, body);
+        res = body;
+      } else {
+        res = await api<{ reference: string }>('/entreprises/devis', {
+          method: 'POST',
+          json: payload,
+        });
+      }
       setConfirmation({ reference: res.reference });
       reset();
     } catch (err) {
@@ -148,6 +175,12 @@ export default function DevisB2BForm() {
 
   return (
     <div className="mx-auto max-w-3xl rounded-fgc-lg border border-fgc-yellow/20 bg-fgc-card p-8 md:p-10">
+      {user && (
+        <div className="mb-6 rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-[0.9rem] text-fgc-cream">
+          ✓ Connecté en tant que <strong className="text-fgc-yellow">{user.firstName ?? user.email}</strong>.
+          Vos infos sont pré-remplies.
+        </div>
+      )}
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Entreprise" required error={errors.companyName?.message}>
@@ -247,7 +280,16 @@ export default function DevisB2BForm() {
           />
           <span>
             J&apos;accepte que les informations transmises soient utilisées pour traiter ma
-            demande de devis (RGPD, données conservées 24 mois max).
+            demande de devis (cf.{' '}
+            <a
+              href="/legal/politique-confidentialite"
+              target="_blank"
+              rel="noreferrer"
+              className="text-fgc-yellow underline decoration-dotted hover:text-fgc-yellow-deep"
+            >
+              politique de confidentialité
+            </a>
+            ).
             {errors.acceptRgpd?.message && (
               <span className="mt-1 block text-fgc-pink-hot">{errors.acceptRgpd.message}</span>
             )}

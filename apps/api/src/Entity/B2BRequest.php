@@ -165,6 +165,15 @@ class B2BRequest
     #[Groups(['b2b:admin:read'])]
     private ?\DateTimeImmutable $internalClosedAt = null;
 
+    /**
+     * Rattachement (optionnel) à un compte client. Posé à l'INSERT si un user
+     * `ROLE_CLIENT` est authentifié au moment du POST. Pas exposé en Groups
+     * (back-ref non exposée, cf. GOTCHAS #4).
+     */
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?User $user = null;
+
     #[ORM\Column(type: 'datetime_immutable')]
     #[Groups(['b2b:read', 'b2b:admin:read'])]
     private ?\DateTimeImmutable $createdAt = null;
@@ -224,6 +233,9 @@ class B2BRequest
     public function setInternalNegotiatedAt(?\DateTimeImmutable $v): static { $this->internalNegotiatedAt = $v; return $this; }
     public function getInternalClosedAt(): ?\DateTimeImmutable { return $this->internalClosedAt; }
     public function setInternalClosedAt(?\DateTimeImmutable $v): static { $this->internalClosedAt = $v; return $this; }
+    public function getUser(): ?User { return $this->user; }
+    public function setUser(?User $v): static { $this->user = $v; return $this; }
+
     public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
     public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
 

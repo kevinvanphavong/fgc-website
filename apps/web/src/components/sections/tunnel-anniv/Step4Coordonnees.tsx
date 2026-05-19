@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { buttonVariants } from '@/components/ui/Button';
+import { useClient } from '@/lib/use-client';
 import type { TunnelDraft } from './types';
 
 const PHONE_REGEX = /^(?:(?:\+33|0)\s?[67](?:\s?\d{2}){4})$/;
@@ -35,6 +36,20 @@ interface Step4Props {
 
 export default function Step4Coordonnees({ draft, update, onNext, onBack }: Step4Props) {
   const [errors, setErrors] = useState<FieldErrors>({});
+  const { user } = useClient();
+
+  // Pré-remplissage si un client est connecté : on ne remplit que les champs
+  // encore vides du draft pour ne pas écraser une saisie en cours.
+  useEffect(() => {
+    if (!user) return;
+    const patch: Partial<TunnelDraft> = {};
+    if (!draft.parentFirstName && user.firstName) patch.parentFirstName = user.firstName;
+    if (!draft.parentLastName && user.lastName) patch.parentLastName = user.lastName;
+    if (!draft.parentEmail && user.email) patch.parentEmail = user.email;
+    if (!draft.parentPhone && user.phone) patch.parentPhone = user.phone;
+    if (Object.keys(patch).length > 0) update(patch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   function setField<K extends keyof TunnelDraft>(k: K, v: TunnelDraft[K]) {
     update({ [k]: v } as Partial<TunnelDraft>);
@@ -75,6 +90,12 @@ export default function Step4Coordonnees({ draft, update, onNext, onBack }: Step
         </p>
       </header>
 
+      {user && (
+        <div className="mb-5 rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-[0.9rem] text-fgc-cream">
+          ✓ Connecté en tant que <strong className="text-fgc-yellow">{user.firstName ?? user.email}</strong>.
+          Vos infos sont pré-remplies.
+        </div>
+      )}
       <div className="rounded-fgc-rsv border border-fgc-purple/60 bg-fgc-card p-6">
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Prénom du parent" error={errors.parentFirstName} htmlFor="parent-fn">
@@ -167,14 +188,22 @@ export default function Step4Coordonnees({ draft, update, onNext, onBack }: Step
             <span className="text-sm text-fgc-cream/90">
               J’accepte les{' '}
               <a
-                href="/cgv"
+                href="/legal/cgv"
                 target="_blank"
                 rel="noreferrer"
                 className="text-fgc-yellow underline decoration-dotted hover:text-fgc-yellow-deep"
               >
-                conditions générales de réservation
+                conditions générales de vente
               </a>{' '}
-              et la politique d’annulation.
+              et la{' '}
+              <a
+                href="/legal/politique-confidentialite"
+                target="_blank"
+                rel="noreferrer"
+                className="text-fgc-yellow underline decoration-dotted hover:text-fgc-yellow-deep"
+              >
+                politique de confidentialité
+              </a>.
             </span>
           </label>
           {errors.acceptCGV && (

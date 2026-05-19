@@ -2,6 +2,7 @@
 
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Schedule from '@/components/sections/Schedule';
+import ContactForm from '@/components/sections/contact/ContactForm';
 
 const CONTACT_CARDS = [
   {
@@ -27,15 +28,6 @@ const CONTACT_CARDS = [
     linkLabel: 'contact@familygamescenter.fr',
     href: 'mailto:contact@familygamescenter.fr',
   },
-];
-
-const SUBJECTS = [
-  'Question générale',
-  'Réservation anniversaire',
-  'Tarifs groupes',
-  'Événement entreprise',
-  'Objet trouvé / perdu',
-  'Autre',
 ];
 
 export default function ContactPage() {
@@ -140,67 +132,7 @@ export default function ContactPage() {
             ligne.
           </p>
 
-          <div className="mx-auto max-w-3xl rounded-fgc-lg border border-fgc-yellow/20 bg-fgc-card p-8 md:p-10">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert(
-                  'Merci pour votre message ! Nous revenons vers vous au plus vite.'
-                );
-              }}
-              className="flex flex-col gap-5"
-            >
-              <div className="grid gap-5 md:grid-cols-2">
-                <FormField
-                  label="Votre nom"
-                  type="text"
-                  required
-                  placeholder="Prénom Nom"
-                />
-                <FormField
-                  label="Email"
-                  type="email"
-                  required
-                  placeholder="vous@example.fr"
-                />
-              </div>
-              <div className="grid gap-5 md:grid-cols-2">
-                <FormField
-                  label="Téléphone (facultatif)"
-                  type="tel"
-                  placeholder="06 …"
-                />
-                <div className="flex flex-col gap-2">
-                  <label className="font-display text-[0.82rem] uppercase tracking-wider text-fgc-cream/70">
-                    Sujet
-                  </label>
-                  <select className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 text-fgc-cream outline-none transition-colors focus:border-fgc-yellow/50">
-                    {SUBJECTS.map((s) => (
-                      <option key={s} className="bg-fgc-bg text-fgc-cream">
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-display text-[0.82rem] uppercase tracking-wider text-fgc-cream/70">
-                  Message
-                </label>
-                <textarea
-                  className="min-h-[140px] resize-y rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 text-fgc-cream outline-none transition-colors focus:border-fgc-yellow/50"
-                  placeholder="Votre message…"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center gap-2.5 rounded-full border-2 border-fgc-yellow-shadow bg-fgc-yellow px-6 py-3.5 font-display text-[1rem] uppercase leading-none text-fgc-purple shadow-fgc-btn-yellow transition-transform hover:-translate-y-0.5 active:translate-y-px"
-              >
-                Envoyer
-              </button>
-            </form>
-          </div>
+          <ContactForm />
         </div>
       </section>
 
@@ -228,21 +160,3 @@ export default function ContactPage() {
   );
 }
 
-function FormField({
-  label,
-  ...props
-}: {
-  label: string;
-} & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label className="font-display text-[0.82rem] uppercase tracking-wider text-fgc-cream/70">
-        {label}
-      </label>
-      <input
-        {...props}
-        className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 text-fgc-cream outline-none transition-colors focus:border-fgc-yellow/50"
-      />
-    </div>
-  );
-}

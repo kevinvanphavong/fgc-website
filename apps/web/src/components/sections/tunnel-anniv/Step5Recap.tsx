@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/cn';
 import { buttonVariants } from '@/components/ui/Button';
+import { useClient } from '@/lib/use-client';
 import { formatApiError, submitReservation, ApiError } from './api';
 import { FORMULE_TOKEN, type AnnivFormule, type StepKey, type TunnelDraft, type ReservationConfirmation } from './types';
 
@@ -45,6 +46,7 @@ export default function Step5Recap({
   onConfirmed,
 }: Step5Props) {
   const formule = formules.find((f) => f.key === draft.formuleKey);
+  const { user } = useClient();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slotConflict, setSlotConflict] = useState(false);
@@ -72,7 +74,7 @@ export default function Step5Recap({
     setError(null);
     setSlotConflict(false);
     try {
-      const reservation = await submitReservation(draft);
+      const reservation = await submitReservation(draft, { authenticated: !!user });
       onConfirmed(reservation);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {

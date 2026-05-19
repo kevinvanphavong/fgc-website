@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Message contact — {{ message.reference }}</title>
+</head>
+<body style="margin:0;padding:24px;background:#160a3a;color:#fff4e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#3d1b6b;border-radius:18px;padding:32px;">
+        <h1 style="font-size:22px;margin:0 0 8px;color:#ffd93d;">✉️ Nouveau message contact</h1>
+        <p style="margin:0 0 24px;color:#fff4e0;opacity:.85;">
+            Référence <strong style="color:#ff2d87;">{{ message.reference }}</strong> ·
+            Reçu le {{ message.createdAt|date('d/m/Y à H:i') }}
+        </p>
+
+        <div style="background:#160a3a;border-radius:14px;padding:20px;margin-bottom:16px;">
+            <p style="margin:6px 0;"><strong>De :</strong> {{ message.name }}</p>
+            <p style="margin:6px 0;">📧 <a href="mailto:{{ message.email }}" style="color:#00e5ff;">{{ message.email }}</a></p>
+            {% if message.phone %}
+                <p style="margin:6px 0;">📱 <a href="tel:{{ message.phone|replace({' ': ''}) }}" style="color:#00e5ff;">{{ message.phone }}</a></p>
+            {% endif %}
+            <p style="margin:6px 0;"><strong>Sujet :</strong> {{ message.subject.value }}</p>
+        </div>
+
+        <div style="background:#160a3a;border-radius:14px;padding:20px;margin-bottom:16px;">
+            <h2 style="font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:#ffd93d;margin:0 0 12px;">Message</h2>
+            <p style="margin:0;white-space:pre-line;">{{ message.message }}</p>
+        </div>
+
+        <p style="margin:24px 0 0;text-align:center;">
+            <a href="https://familygamescenter.fr/admin/messages" style="display:inline-block;background:#ff2d87;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:bold;">
+                Ouvrir dans le back-office →
+            </a>
+        </p>
+    </div>
+</body>
+</html>

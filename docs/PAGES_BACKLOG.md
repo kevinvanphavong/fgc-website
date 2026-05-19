@@ -19,18 +19,18 @@ Ordre conseillé d'implémentation. Une PR = un scope cohérent (page, groupe de
 | #  | PR                            | Scope                                | Endpoints / fichiers                              |
 |----|-------------------------------|--------------------------------------|---------------------------------------------------|
 | 8  | `chore/api-bootstrap`         | Init Symfony 8 + API Platform        | composer setup, JWT keypair, CORS, /api/health    |
-| 9  | `feat/api-contact-forms`      | Endpoints contact + B2B              | POST /api/contact, POST /api/entreprises/devis    |
+| 9  | `feat/api-contact-forms` ✅ livré 2026-05-19 | Endpoints contact + B2B + module admin Messages | POST /api/contact + GET/PATCH /api/admin/contact-messages (PR9 finitions) ; B2B livré en PR6 |
 | 10 | `feat/api-reservation-tunnel` | Endpoints tunnel anniversaire (**V1 SANS STRIPE** — cf. CLAUDE.md § 11) | POST /api/reservations/anniversaire (demande sans paiement) + envoi email gérant/client. Stripe = V2. |
-| 11 | `feat/api-auth-account`       | Auth client + profil                 | POST /api/auth/register, /login, GET/PATCH /api/me, GET /api/me/reservations |
+| 11 | `feat/api-auth-account` ✅ livré 2026-05-19 | Auth client + profil                 | POST /api/auth/register + /forgot-password, GET/PATCH/DELETE /api/me, POST /api/me/change-password, GET /api/me/reservations |
 
 ## Phase 3 — Intégration front × back
 
 | #  | PR                            | Scope                                |
 |----|-------------------------------|--------------------------------------|
-| 12 | `feat/web-forms-wired`        | Branche contact + B2B aux endpoints Symfony (remplace mailto) |
+| 12 | `feat/web-forms-wired` ✅ livré 2026-05-19 | Branche contact + B2B aux endpoints Symfony (PR9 finitions + PR6) — RHF + Zod miroir DTO, confirmation inline avec référence |
 | 13 | `feat/web-reservation-tunnel` | Tunnel React (**V1 SANS Stripe Elements**) — 5 étapes : formule, date/créneau, détails enfant, coordonnées, récap+envoi. Stripe Elements = V2. |
-| 14 | `feat/web-auth-account`       | `/connexion`, `/inscription`, `/compte` + JWT côté front      |
-| 15 | `chore/seo-a11y-perf-rgpd`    | Audit final, bandeau cookies, mentions légales, sitemap, robots.txt |
+| 14 | `feat/web-auth-account` ✅ livré 2026-05-19 | `/connexion`, `/inscription`, `/mot-de-passe-oublie`, `/compte`, `/compte/reservations` + cookie `client_token` + Header avatar + pré-fill tunnel/B2B connecté |
+| 15 | `chore/seo-a11y-perf-rgpd` ✅ livré 2026-05-19 (partiel) | Pages légales (4) + CookieBanner + sitemap + robots + 404 + JSON-LD LocalBusiness (PR9 finitions). A11y déjà livré PR8. Reste : audit Lighthouse final avant prod. |
 
 ## Critères d'acceptation transverses
 
@@ -57,5 +57,5 @@ Ordre conseillé d'implémentation. Une PR = un scope cohérent (page, groupe de
 | 7/9 | Form contact → email simple (Mailer Symfony + Brevo SMTP) ou CRM (HubSpot/Pipedrive) ?    |
 | 8   | Hébergeur PHP (OVH / Scaleway / Clever Cloud) ? Postgres ou MariaDB ?                     |
 | 10  | ~~Le tunnel résa pousse vers où à la fin ? Mail FGC + Stripe acompte 50€ confirmé ?~~ → **Tranché 2026-05-15 : V1 = demande sans paiement, email FGC + email client. Stripe V2.** |
-| 11  | Espace client : prêt-à-build, ou on garde un placeholder "à venir" en v1 ?                |
+| 11  | ~~Espace client : prêt-à-build, ou on garde un placeholder "à venir" en v1 ?~~ → **Tranché 2026-05-19 : V1 livrée (register + login + profil + résa).** Vérif email V2. |
 | 15  | RGPD : bandeau cookies — qui valide les textes (DPO / avocat) ? Plausible ou GA4 ?        |

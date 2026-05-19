@@ -199,6 +199,16 @@ class DemandeReservation
     #[Groups(['demande:admin:read'])]
     private ?\DateTimeImmutable $internalPassedAt = null;
 
+    /**
+     * Rattachement (optionnel) à un compte client. Posé à l'INSERT si un user
+     * `ROLE_CLIENT` est authentifié au moment du POST. Pas exposé en Groups :
+     * la lecture pour /api/me/reservations passe par MeController, pas par
+     * la back-ref User.reservations (gotcha #4 : eager loading boucle infinie).
+     */
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?User $user = null;
+
     #[ORM\Column(type: 'datetime_immutable')]
     #[Groups(['anniv:read', 'demande:admin:read'])]
     private ?\DateTimeImmutable $createdAt = null;
@@ -262,6 +272,9 @@ class DemandeReservation
     public function setUpsellVR(bool $v): static { $this->upsellVR = $v; return $this; }
     public function getUnitPriceCentsSnapshot(): int { return $this->unitPriceCentsSnapshot; }
     public function setUnitPriceCentsSnapshot(int $v): static { $this->unitPriceCentsSnapshot = $v; return $this; }
+    public function getUser(): ?User { return $this->user; }
+    public function setUser(?User $v): static { $this->user = $v; return $this; }
+
     public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
     public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
     public function getAdminNote(): ?string { return $this->adminNote; }
