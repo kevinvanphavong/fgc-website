@@ -205,7 +205,7 @@ export const ANNIV_CARDS: AnnivCard[] = [
     icon: '🎳',
     name: 'New Bowler',
     age: '6 à 8 ans',
-    price: '14,90€/enfant',
+    price: '18,50€/enfant',
     features: [
       '1 partie de bowling + chaussures',
       '1 jeton arcade par enfant',
