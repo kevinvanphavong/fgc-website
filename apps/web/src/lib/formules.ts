@@ -112,6 +112,26 @@ export const PASS_CARDS: PassCard[] = [
   },
 ];
 
+/**
+ * Conditions d'utilisation des Pass multi-activités.
+ * À afficher sur la section Pass (sous-titre + encart conditions / footer carte).
+ * Règles communes aux 4 pass (Chill, Confort, VIP, Multiverse).
+ */
+export const PASS_CONDITIONS_TAGLINE =
+  'Lundi → vendredi · hors vacances scolaires (zone B) et jours fériés · achat sur place le jour J · 200 pass/jour';
+
+export const PASS_CONDITIONS_DETAILS: string[] = [
+  'Valable du lundi au vendredi uniquement (non disponible le samedi).',
+  'Non disponible pendant les vacances scolaires zone B et les jours fériés.',
+  "Achat sur place uniquement, le jour de l'utilisation — pas de réservation à l'avance, pas de bon cadeau.",
+  "Inscriptions jusqu'à 21h, dans la limite de 200 pass par jour.",
+  'Piste de bowling selon disponibilité — pour garantir votre piste, choisissez une formule Résa (Silver, Gold ou Platinium).',
+];
+
+/** Mention compacte à intégrer en footer de chaque carte de pass. */
+export const PASS_CONDITIONS_FOOTER =
+  'Lun→Ven hors vacances/fériés · achat sur place le jour J jusqu’à 21h · 200 pass/jour · piste selon dispo';
+
 export type ResaCard = {
   key: string;
   rank: string;

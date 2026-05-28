@@ -10,6 +10,10 @@ import {
   fetchAnnivCards,
   fetchVipFeatures,
 } from '@/lib/content-api';
+import {
+  PASS_CONDITIONS_TAGLINE,
+  PASS_CONDITIONS_DETAILS,
+} from '@/lib/formules';
 import type { TarifCard } from '@/lib/tarifs';
 
 export const metadata: Metadata = {
@@ -308,12 +312,17 @@ export default async function TarifsEtFormulesPage() {
                 Pass <span className="accent">multi-activités.</span>
               </h2>
             </div>
-            <p className="text-[1rem] leading-relaxed text-fgc-cream/80">
-              Bowling à volonté + bonus.{' '}
-              <em className="not-italic font-semibold text-fgc-yellow">
-                Plus vous ajoutez, plus vous économisez.
-              </em>
-            </p>
+            <div className="flex flex-col gap-3">
+              <p className="text-[1rem] leading-relaxed text-fgc-cream/80">
+                Bowling à volonté + bonus.{' '}
+                <em className="not-italic font-semibold text-fgc-yellow">
+                  Plus vous ajoutez, plus vous économisez.
+                </em>
+              </p>
+              <p className="font-display text-[0.72rem] uppercase leading-snug tracking-wide text-fgc-yellow/80">
+                {PASS_CONDITIONS_TAGLINE}
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-[18px] sm:grid-cols-2 xl:grid-cols-4">
@@ -373,6 +382,23 @@ export default async function TarifsEtFormulesPage() {
               </article>
             ))}
           </div>
+
+          <aside
+            aria-label="Conditions d'utilisation des Pass multi-activités"
+            className="mt-8 rounded-fgc-lg border border-fgc-yellow/25 bg-fgc-card/70 p-5 sm:p-6"
+          >
+            <div className="mb-3 font-display text-[0.78rem] uppercase tracking-[2px] text-fgc-yellow">
+              Conditions d&apos;utilisation
+            </div>
+            <ul className="flex flex-col gap-2 text-[0.85rem] leading-relaxed text-fgc-cream/80">
+              {PASS_CONDITIONS_DETAILS.map((line) => (
+                <li key={line} className="flex items-baseline gap-2">
+                  <span aria-hidden className="text-fgc-yellow">•</span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </aside>
         </div>
       </section>
 
