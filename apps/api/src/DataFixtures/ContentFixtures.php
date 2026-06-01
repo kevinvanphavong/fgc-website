@@ -103,7 +103,7 @@ class ContentFixtures extends Fixture
                 ['label' => 'Pop-corn', 'price' => '3,50€'],
                 ['label' => 'Bonbons', 'price' => '3,50€'],
             ]],
-            ['icon' => '🍕', 'name' => 'Pack Afterwork', 'unit' => 'lun → jeu soir', 'note' => 'Économie −22 % vs. à la carte (87€).', 'prices' => [
+            ['icon' => '🍕', 'name' => 'Pack Afterwork', 'unit' => 'jeu & ven soir', 'note' => 'Économie −22 % vs. à la carte (87€).', 'prices' => [
                 ['label' => '2 pizzas', 'price' => 'incluses'],
                 ['label' => 'Girafe 2,5L pression', 'price' => 'incluse'],
                 ['label' => '1h billard ou fléchettes', 'price' => 'incluse'],
@@ -158,9 +158,9 @@ class ContentFixtures extends Fixture
     private function loadHebdo(ObjectManager $m): void
     {
         $cards = [
-            ['key' => 'bowling-illimite', 'tag' => 'Lundi & mardi soir', 'title' => 'Bowling illimité', 'description' => "Enchaînez les parties autant que vous voulez, de 20h30 jusqu'à la fermeture. Chaussures incluses. Pas besoin de réserver.", 'bullets' => [], 'price' => '20€/pers.', 'days' => 'Lundi · Mardi / 20h30 → fermeture', 'featured' => false, 'savings' => null],
-            ['key' => 'jeudi-a-gogo', 'tag' => 'Jeudi soir', 'title' => 'Jeudi à gogo', 'description' => "Bowling et billard à volonté toute la soirée, avec un soda offert. On accueille les 150 premiers entre 17h et 21h.", 'bullets' => [], 'price' => '24,90€/pers.', 'days' => 'Jeudi / 150 premiers', 'featured' => false, 'savings' => null],
-            ['key' => 'afterwork', 'tag' => 'Lundi à jeudi · soir', 'title' => 'Pack Afterwork', 'description' => null, 'bullets' => ['2 pizzas au choix', 'Girafe 2,5L de bière pression', '1h de billard OU fléchettes'], 'price' => '68€/groupe', 'days' => 'Lundi → Jeudi soir', 'featured' => true, 'savings' => '−22 % vs. à la carte (87€)'],
+            ['key' => 'bowling-a-volonte', 'tag' => 'Lundi & mardi soir', 'title' => 'Bowling à volonté', 'description' => "Parties illimitées + chaussures + 1 soda offert, de 20h30 jusqu'à la fermeture. Sans réservation, dans la limite des 100 premiers.", 'bullets' => [], 'price' => '20€/pers.', 'days' => 'Lundi · Mardi / 20h30 → fermeture', 'featured' => false, 'savings' => null],
+            ['key' => 'jeudi-a-gogo', 'tag' => 'Jeudi · 17h → 22h', 'title' => 'Jeudi à gogo', 'description' => "L'institution du jeudi : bowling illimité + chaussures + 1 soda offert, de 17h à 22h. 100 premiers servis, sans réservation.", 'bullets' => [], 'price' => '20€/pers.', 'days' => 'Jeudi / 17h → 22h', 'featured' => false, 'savings' => null],
+            ['key' => 'afterwork', 'tag' => 'Jeudi & vendredi · soir', 'title' => 'Pack Afterwork', 'description' => null, 'bullets' => ['2 pizzas au choix', 'Girafe 2,5L de bière pression', '1h de billard OU fléchettes'], 'price' => '68€/groupe', 'days' => 'Jeudi → Vendredi soir', 'featured' => true, 'savings' => '−22 % vs. à la carte (87€)'],
         ];
 
         foreach ($cards as $pos => $d) {
