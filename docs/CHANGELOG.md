@@ -2,6 +2,15 @@
 
 > Un bullet par PR significative. Date | branch | scope | décisions notables.
 
+## 2026-07-03
+
+- **`main`** — `feat(api)`: émission async des réservations anniversaire vers Shiftly (push unidirectionnel).
+  - **Transport** : `symfony/messenger` + `symfony/http-client` + `symfony/doctrine-messenger` ajoutés. Transport `async` sur Doctrine (`config/packages/messenger.yaml`), retry 3 essais backoff exponentiel (1s → 3s → 9s), `failure_transport: failed`. En env=test : transport `in-memory`.
+  - **Message** `PushReservationToShiftly` (porte l'`id` seul) dispatché depuis `BirthdayReservationProcessor` **après** le `flush` local, enveloppé en best-effort (un transport indisponible ne casse jamais la création web — décision §1 du prompt d'ingestion).
+  - **Handler** `PushReservationToShiftlyHandler` (`#[AsMessageHandler]`) : recharge l'entité, `POST {SHIFTLY_INGEST_URL}/api/ingest/reservations` avec header `X-Shiftly-Ingest-Key`. `sourceRef` = `reference` FGC (idempotence : Shiftly déduplique, rejouer = pas de doublon). 200/201 → OK ; toute autre réponse ou panne réseau → exception → retry Messenger. `SHIFTLY_INGEST_URL` vide = no-op (push désactivé).
+  - **Config** : `SHIFTLY_INGEST_URL` / `SHIFTLY_INGEST_KEY` dans `.env.example` (vides) + défauts committés dans `config/services.yaml` (`.env` étant gitignoré sur ce repo). Secrets réels en `.env.local` uniquement.
+  - **Périmètre** : réservations anniversaire seulement (pas B2B ni avis, v2). Unidirectionnel (aucune lecture depuis Shiftly). Suite de tests : **120 tests, 0 failure** (le dispatch passe via transport `in-memory` en test).
+
 ## 2026-05-19
 
 - **`main`** — `feat(api,web)`: espace client public — auth + profil + mes réservations (PR11 + PR14).

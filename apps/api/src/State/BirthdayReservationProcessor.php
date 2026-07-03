@@ -10,6 +10,7 @@ use App\Entity\AnnivCard;
 use App\Entity\DemandeReservation;
 use App\Entity\User;
 use App\Enum\DemandeReservationStatus;
+use App\Message\PushReservationToShiftly;
 use App\Repository\DemandeReservationRepository;
 use App\Service\BirthdayReservationMailer;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,6 +18,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
@@ -40,6 +42,7 @@ final class BirthdayReservationProcessor implements ProcessorInterface
         #[Autowire(service: 'limiter.anniv_post')]
         private readonly RateLimiterFactory $postLimiter,
         private readonly Security $security,
+        private readonly MessageBusInterface $bus,
     ) {
     }
 
@@ -115,6 +118,17 @@ final class BirthdayReservationProcessor implements ProcessorInterface
 
         $this->em->persist($reservation);
         $this->em->flush();
+
+        // Push async vers Shiftly — APRÈS le flush (jamais dans la transaction) :
+        // on ne pousse qu'une résa réellement persistée. Le dispatch dépose juste
+        // un message sur le transport ; l'appel HTTP à Shiftly se fait dans le
+        // worker. Enveloppé en best-effort : même un transport indisponible ne
+        // doit pas faire échouer la création web (décision §1 du prompt).
+        try {
+            $this->bus->dispatch(new PushReservationToShiftly($reservation->getId()));
+        } catch (\Throwable $e) {
+            $this->logger->error('Dispatch push Shiftly KO', ['ref' => $reservation->getReference(), 'err' => $e->getMessage()]);
+        }
 
         // Mails best-effort — un échec ne rollback PAS la résa (CLAUDE.md §11) :
         // le gérant rappellera de toute façon, on log et on continue.
