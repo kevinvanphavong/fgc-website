@@ -1,0 +1,30 @@
+framework:
+    messenger:
+        # Les messages non traités après épuisement des retries partent ici,
+        # consultables via `messenger:failed:show` et rejouables à la main.
+        failure_transport: failed
+
+        transports:
+            # Push async des réservations vers Shiftly (transport Doctrine :
+            # persistant → un message survit à un redémarrage / à Shiftly coupé).
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000       # 1s avant le 1er retry…
+                    multiplier: 3     # …puis 3s, 9s (backoff exponentiel)
+
+            failed: 'doctrine://default?queue_name=failed'
+
+            sync: 'sync://'
+
+        routing:
+            # Le push Shiftly est toujours asynchrone (jamais dans la requête web).
+            App\Message\PushReservationToShiftly: async
+
+when@test:
+    framework:
+        messenger:
+            transports:
+                # En test, pas de vraie file : messages traités en mémoire.
+                async: 'in-memory://'
