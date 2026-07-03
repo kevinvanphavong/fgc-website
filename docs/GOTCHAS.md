@@ -189,4 +189,29 @@ Couvre `/api/me`, `/api/me/`, `/api/me/reservations`, `/api/me/change-password` 
 
 ---
 
+## 10. Messenger + env vars — `.env` gitignoré ⇒ défauts dans `services.yaml`, et transport Doctrine = paquet à part
+
+**Contexte** : PR push réservations → Shiftly (2026-07-03), 1ʳᵉ intro de `symfony/messenger` sur le repo.
+
+**Piège A — transport `doctrine://` absent malgré `symfony/messenger`.**
+`composer require symfony/messenger` **ne fournit pas** le transport Doctrine. `messenger:setup-transports` échoue avec *« No transport supports the given Messenger DSN »* tant que `MESSENGER_TRANSPORT_DSN=doctrine://…`. Il faut **`composer require symfony/doctrine-messenger`** en plus (idem `symfony/amqp-messenger`, `symfony/redis-messenger` pour les autres DSN).
+
+**Piège B — `.env` est gitignoré sur ce repo (≠ Flex standard).**
+La racine `.gitignore` ignore `.env` (ligne 9). Or Flex écrit les nouvelles vars (ex. `MESSENGER_TRANSPORT_DSN`) dans `.env`, qui **ne sera jamais committé**. Une var référencée en `%env(FOO)%` sans valeur fait échouer la compilation du container sur un clone neuf. **Fix** : donner un défaut committé dans `config/services.yaml` :
+
+```yaml
+parameters:
+    env(SHIFTLY_INGEST_URL): ''            # défaut committé, vide = feature off
+    env(MESSENGER_TRANSPORT_DSN): 'doctrine://default?auto_setup=0'
+```
+
+Les fichiers d'env (`.env`, `.env.local`) surchargent toujours ce défaut à runtime. `.env.example` reste la doc pour les humains (à copier en `.env.local`).
+
+**Piège C — `.env.local` PAS chargé en `env=test`.**
+Symfony ignore volontairement `.env.local` en environnement `test`. Le `.env.test` committé fixe `DATABASE_URL` en dur (port 5432 = Postgres natif de Kévin). Si le Postgres tourne sur un autre port (ex. 5433 pour cohabiter avec un autre projet Docker sur 5432), les tests visent le mauvais serveur. **Fix** : override local dans **`.env.test.local`** (gitignoré, lui, chargé en test) — ne jamais éditer le `.env.test` committé.
+
+**Quand appliquer** : toute PR qui ajoute une dépendance Flex écrivant dans `.env` (Messenger, Lock, Cache…), toute nouvelle var d'env optionnelle, et tout run de tests sur une machine où Postgres n'est pas sur 5432.
+
+---
+
 *Fin GOTCHAS.md*
