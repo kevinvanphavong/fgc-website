@@ -35,9 +35,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     operations: [
-        // Public — création depuis le tunnel anniv (PR10).
+        // Création depuis le tunnel anniv (PR10). Réservé aux comptes CLIENT
+        // (décision Kévin 2026-07-03) : plus de réservation en visiteur anonyme,
+        // il faut un compte pour envoyer une demande. Le front gate déjà l'accès
+        // au tunnel ; cette règle est le garde-fou serveur (source de vérité).
         new Post(
             uriTemplate: '/reservations/anniversaire',
+            security: "is_granted('ROLE_CLIENT')",
             input: BirthdayReservationInput::class,
             processor: BirthdayReservationProcessor::class,
             denormalizationContext: ['groups' => ['anniv:write']],

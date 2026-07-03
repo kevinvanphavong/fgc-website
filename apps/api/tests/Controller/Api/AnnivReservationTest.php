@@ -42,10 +42,56 @@ class AnnivReservationTest extends WebTestCase
         ], $override);
     }
 
-    private function post(array $payload): \Symfony\Component\HttpFoundation\Response
+    /** JWT d'un compte client de test, mémoïsé pour toute la suite. */
+    private static ?string $clientJwt = null;
+
+    /**
+     * Enregistre (une fois) un compte client de test et renvoie son JWT.
+     * Depuis 2026-07-03 le POST anniv exige `ROLE_CLIENT` : tous les POST
+     * nominaux doivent être authentifiés en client.
+     */
+    private function clientToken(): string
     {
+        if (self::$clientJwt !== null) {
+            return self::$clientJwt;
+        }
+
         static::ensureKernelShutdown();
         $client = static::createClient();
+        $client->request(
+            'POST',
+            '/api/auth/register',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode([
+                'email' => 'anniv-client-'.bin2hex(random_bytes(4)).'@test.fgc',
+                'password' => 'TunnelPass0rd!',
+                'firstName' => 'Client',
+                'lastName' => 'Tunnel',
+                'acceptRgpd' => true,
+                'acceptNewsletter' => false,
+            ], JSON_THROW_ON_ERROR),
+        );
+        $status = $client->getResponse()->getStatusCode();
+        if ($status !== 201) {
+            throw new \RuntimeException(sprintf(
+                'clientToken: register a renvoyé %d. Réponse : %s',
+                $status,
+                $client->getResponse()->getContent() ?: '(vide)',
+            ));
+        }
+        $body = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+
+        return self::$clientJwt = $body['token']
+            ?? throw new \RuntimeException('Register OK mais pas de token dans la réponse.');
+    }
+
+    private function post(array $payload): \Symfony\Component\HttpFoundation\Response
+    {
+        $token = $this->clientToken();
+
+        static::ensureKernelShutdown();
+        $client = static::createClient();
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer '.$token);
         $client->request(
             'POST',
             self::POST_URI,
@@ -65,6 +111,25 @@ class AnnivReservationTest extends WebTestCase
         $this->assertMatchesRegularExpression('/^FGC-[A-Z2-9]{6}$/', $body['reference'] ?? '');
         $this->assertSame('nouveau', $body['status'] ?? null);
         $this->assertSame('superbowler', $body['formuleKey'] ?? null);
+    }
+
+    public function testRejectsAnonymous(): void
+    {
+        // Sans compte client → l'endpoint doit refuser (garde-fou serveur).
+        static::ensureKernelShutdown();
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            self::POST_URI,
+            server: ['CONTENT_TYPE' => 'application/ld+json'],
+            content: json_encode($this->validPayload(['timeSlot' => '10:00']), JSON_THROW_ON_ERROR),
+        );
+        $status = $client->getResponse()->getStatusCode();
+        $this->assertContains(
+            $status,
+            [401, 403],
+            'POST anonyme doit être rejeté (401/403), reçu '.$status.' : '.$client->getResponse()->getContent(),
+        );
     }
 
     public function testRejectsCgvFalse(): void

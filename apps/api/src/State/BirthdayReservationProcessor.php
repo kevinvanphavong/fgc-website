@@ -110,7 +110,10 @@ final class BirthdayReservationProcessor implements ProcessorInterface
             ->setUpsellVR($data->upsellVR)
             ->setUnitPriceCentsSnapshot($formule->getUnitPriceCents());
 
-        // Rattachement à un compte client connecté (cookie client_token forwardé).
+        // Rattachement au compte client. Depuis 2026-07-03 l'opération POST exige
+        // `ROLE_CLIENT` (cf. DemandeReservation) : un client authentifié est donc
+        // toujours présent ici. On garde le garde `isClient()` par prudence — si la
+        // sécurité de l'endpoint changeait, on ne rattacherait pas un non-client.
         $authUser = $this->security->getUser();
         if ($authUser instanceof User && $authUser->isClient()) {
             $reservation->setUser($authUser);

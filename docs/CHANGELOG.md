@@ -4,6 +4,12 @@
 
 ## 2026-07-03
 
+- **`main`** — `feat(api,web)`: réservation anniversaire **réservée aux comptes client** (fin de la réservation en visiteur anonyme).
+  - **API** : opération `POST /reservations/anniversaire` passe en `security: "is_granted('ROLE_CLIENT')"` (garde-fou serveur = source de vérité). Anonyme → 401, staff (non-client) → 403, client → 201. Le `BirthdayReservationProcessor` rattache désormais **toujours** la demande au compte client (le stamping `userId` était déjà là, il devient garanti).
+  - **Web** : la page `/reserver-anniversaire` (RSC) gate l'accès via `getCurrentClient()` — visiteur non connecté redirigé vers `/connexion?next=…` en préservant la formule pré-sélectionnée (miroir de la protection `/compte`). La soumission du tunnel passe déjà par le proxy client `/api/client/proxy` qui injecte le JWT.
+  - **Tests** : `AnnivReservationTest` authentifie tous les POST nominaux en client (register + Bearer JWT) + nouveau `testRejectsAnonymous` (401/403). Suite : **121 tests, 0 failure**.
+  - ⚠️ **Arbitrage business** : ajoute de la friction sur le tunnel priorité conversion n°1 (CLAUDE.md §11). Décision assumée par Kévin. UX retenue : login **avant** le tunnel (option la plus simple ; basculable vers « compte requis à la fin » si besoin, seul le front bougerait).
+
 - **`main`** — `feat(api)`: émission async des réservations anniversaire vers Shiftly (push unidirectionnel).
   - **Transport** : `symfony/messenger` + `symfony/http-client` + `symfony/doctrine-messenger` ajoutés. Transport `async` sur Doctrine (`config/packages/messenger.yaml`), retry 3 essais backoff exponentiel (1s → 3s → 9s), `failure_transport: failed`. En env=test : transport `in-memory`.
   - **Message** `PushReservationToShiftly` (porte l'`id` seul) dispatché depuis `BirthdayReservationProcessor` **après** le `flush` local, enveloppé en best-effort (un transport indisponible ne casse jamais la création web — décision §1 du prompt d'ingestion).
