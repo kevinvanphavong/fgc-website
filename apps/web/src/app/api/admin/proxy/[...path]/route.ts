@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 import { ADMIN_COOKIE } from '@/lib/admin-auth';
+import { CONTENT_TAG } from '@/lib/content-api';
 
 function apiBase(): string {
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:8000/api';
@@ -71,6 +72,11 @@ async function handle(
   // Revalidate the entire public site on successful mutation.
   if (isMutation && upstream.ok) {
     try {
+      // Revalidation ciblée par tag : tout le contenu éditable porte CONTENT_TAG
+      // (cf. content-api.ts + reserver-anniversaire/page.tsx). Fiable même en dev,
+      // contrairement à revalidatePath('/', 'layout') qui ne déclenche pas l'ISR
+      // sous `next dev`. On garde revalidatePath en complément (no-op si tag suffit).
+      revalidateTag(CONTENT_TAG);
       revalidatePath('/', 'layout');
     } catch {
       /* revalidate ne doit pas casser la réponse */

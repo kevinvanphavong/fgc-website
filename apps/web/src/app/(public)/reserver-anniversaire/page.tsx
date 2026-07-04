@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import TunnelAnniversaire from '@/components/sections/tunnel-anniv/TunnelAnniversaire';
 import type { AnnivFormule } from '@/components/sections/tunnel-anniv/types';
+import { CONTENT_TAG } from '@/lib/content-api';
 
 export const metadata: Metadata = {
   title: 'Réserver un anniversaire enfant',
@@ -81,7 +82,7 @@ async function fetchFormules(): Promise<AnnivFormule[]> {
   try {
     const res = await fetch(`${API_BASE}/formules/anniversaires`, {
       headers: { Accept: 'application/json' },
-      next: { revalidate: 300 },
+      next: { revalidate: 300, tags: [CONTENT_TAG] },
     });
     if (!res.ok) {
       console.warn(`[tunnel-anniv] /formules/anniversaires → ${res.status}, fallback servi.`);

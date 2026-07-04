@@ -14,6 +14,9 @@ import { ACTIVITY_PAGES } from './activity-pages';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:8000/api';
 const REVALIDATE = 300;
+/** Tag commun à tout le contenu éditable. Le proxy admin appelle
+ *  `revalidateTag(CONTENT_TAG)` après chaque mutation → mise à jour immédiate. */
+export const CONTENT_TAG = 'fgc-content';
 
 /**
  * Fetch typé avec graceful degradation : si l'API casse (down, 4xx/5xx),
@@ -29,7 +32,7 @@ async function apiFetch<T>(path: string, fallback: T): Promise<T> {
   try {
     const res = await fetch(`${API_BASE}${path}`, {
       headers: { Accept: 'application/json' },
-      next: { revalidate: REVALIDATE },
+      next: { revalidate: REVALIDATE, tags: [CONTENT_TAG] },
     });
     if (!res.ok) {
       console.warn(`[content-api] ${path} → ${res.status}, fallback statique servi.`);
@@ -86,7 +89,7 @@ export async function fetchActivityPage(slug: string): Promise<ActivityPage | nu
   try {
     const res = await fetch(`${API_BASE}/activites/${slug}`, {
       headers: { Accept: 'application/json' },
-      next: { revalidate: REVALIDATE },
+      next: { revalidate: REVALIDATE, tags: [CONTENT_TAG] },
     });
     if (!res.ok) return fallback;
     const data = await res.json();
