@@ -8,7 +8,10 @@ use ApiPlatform\State\ProcessorInterface;
 use ApiPlatform\Validator\Exception\ValidationException;
 use App\Entity\DemandeReservation;
 use App\Enum\DemandeReservationStatus;
+use App\Message\PushReservationToShiftly;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 
@@ -25,6 +28,8 @@ final class AdminDemandeReservationProcessor implements ProcessorInterface
     public function __construct(
         #[Autowire(service: PersistProcessor::class)]
         private readonly ProcessorInterface $persistProcessor,
+        private readonly MessageBusInterface $bus,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -33,6 +38,8 @@ final class AdminDemandeReservationProcessor implements ProcessorInterface
         if (!$data instanceof DemandeReservation) {
             throw new \LogicException('AdminDemandeReservationProcessor attend une DemandeReservation.');
         }
+
+        $statusChanged = false;
 
         $previousData = $context['previous_data'] ?? null;
         if ($previousData instanceof DemandeReservation) {
@@ -56,6 +63,7 @@ final class AdminDemandeReservationProcessor implements ProcessorInterface
             // valeur si on PATCH avec un status identique au précédent est
             // un no-op du côté metier — on ne touche pas au stamp existant).
             if ($newStatus !== $previousStatus) {
+                $statusChanged = true;
                 $now = new \DateTimeImmutable();
                 match ($newStatus) {
                     DemandeReservationStatus::Contacte => $data->setInternalContactedAt($now),
@@ -67,7 +75,24 @@ final class AdminDemandeReservationProcessor implements ProcessorInterface
             }
         }
 
-        return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
+        $result = $this->persistProcessor->process($data, $operation, $uriVariables, $context);
+
+        // Remonter le NOUVEAU statut vers Shiftly (v1.1) — APRÈS le flush, hors
+        // transaction, async best-effort : même mécanisme qu'à la création
+        // (même sourceRef → Shiftly upsert, pas de doublon). Un changement de
+        // statut ne doit jamais échouer si Shiftly est indisponible.
+        if ($statusChanged && $data->getId() !== null) {
+            try {
+                $this->bus->dispatch(new PushReservationToShiftly($data->getId()));
+            } catch (\Throwable $e) {
+                $this->logger->error('Dispatch push Shiftly (transition statut) KO', [
+                    'ref' => $data->getReference(),
+                    'err' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $result;
     }
 
     private function describeAllowed(DemandeReservationStatus $from): string

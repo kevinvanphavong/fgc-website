@@ -2,6 +2,13 @@
 
 > Un bullet par PR significative. Date | branch | scope | décisions notables.
 
+## 2026-07-04
+
+- **`main`** — `feat(api)`: push Shiftly v1.1 — statut brut + remontée à chaque transition.
+  - **Statut brut** : `PushReservationToShiftlyHandler` envoie désormais `DemandeReservationStatus->value` (`nouveau`/`contacte`/`confirme`/`refuse`/`passe`) dans le champ `statut` ; suppression de `mapStatus()` — le mapping vers le vocabulaire Shiftly (EN_ATTENTE_ACOMPTE, CONFIRMEE, ANNULEE, TERMINEE) est fait **côté Shiftly**.
+  - **Push sur transition** : `AdminDemandeReservationProcessor` redispatch `PushReservationToShiftly` **après** le flush d'un changement de statut (même `sourceRef` → Shiftly upsert). Async best-effort : une transition admin ne peut jamais échouer si Shiftly est indisponible (le message est rejoué ensuite).
+  - **Vérif fonctionnelle** : création → `nouveau`, puis `contacte`/`confirme`/`passe` remontés (statuts bruts capturés) ; le vrai Shiftly (:8000) accepte les 5 statuts bruts (201/200 upsert) ; Shiftly coupé pendant une transition → PATCH admin 200 quand même, message conservé pour retry. Suite : **121 tests, 0 failure**.
+
 ## 2026-07-03
 
 - **`main`** — `feat(api,web)`: réservation anniversaire **réservée aux comptes client** (fin de la réservation en visiteur anonyme).
