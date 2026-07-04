@@ -4,6 +4,12 @@
 
 ## 2026-07-04
 
+- **`main`** — `fix(api,web)`: réservation anniversaire de nouveau en **invité** (retour arrière sur le login obligatoire).
+  - **API** : retrait de `security: "is_granted('ROLE_CLIENT')"` sur `POST /reservations/anniversaire` → endpoint public/invité (email obligatoire). Le `BirthdayReservationProcessor` rattache la demande au compte **si** un client est connecté (cookie), sinon la crée en invité — aucune erreur sans compte.
+  - **Web** : retrait du gate `getCurrentClient()` → redirection `/connexion` sur `/reserver-anniversaire` ; le tunnel est de nouveau accessible sans login (ce gate n'avait jamais été committé, il n'a laissé aucune trace).
+  - **Tests** : `AnnivReservationTest` — POST invité → 201 (user_id NULL), POST connecté → 201 (rattaché au compte) ; suppression de `testRejectsAnonymous`. Suite : **122 tests, 0 failure**. Build web OK.
+  - **Motif** : le login obligatoire mettait un péage sur le tunnel priorité conversion n°1 (CLAUDE.md §11). Le système de comptes reste (juste optionnel ici) ; push Shiftly inchangé (une résa invité se pousse comme une autre).
+
 - **`main`** — `feat(api)`: push Shiftly v1.1 — statut brut + remontée à chaque transition.
   - **Statut brut** : `PushReservationToShiftlyHandler` envoie désormais `DemandeReservationStatus->value` (`nouveau`/`contacte`/`confirme`/`refuse`/`passe`) dans le champ `statut` ; suppression de `mapStatus()` — le mapping vers le vocabulaire Shiftly (EN_ATTENTE_ACOMPTE, CONFIRMEE, ANNULEE, TERMINEE) est fait **côté Shiftly**.
   - **Push sur transition** : `AdminDemandeReservationProcessor` redispatch `PushReservationToShiftly` **après** le flush d'un changement de statut (même `sourceRef` → Shiftly upsert). Async best-effort : une transition admin ne peut jamais échouer si Shiftly est indisponible (le message est rejoué ensuite).

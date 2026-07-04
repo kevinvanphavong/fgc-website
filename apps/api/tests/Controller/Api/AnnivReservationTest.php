@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller\Api;
 
+use App\Repository\DemandeReservationRepository;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
@@ -47,8 +48,8 @@ class AnnivReservationTest extends WebTestCase
 
     /**
      * Enregistre (une fois) un compte client de test et renvoie son JWT.
-     * Depuis 2026-07-03 le POST anniv exige `ROLE_CLIENT` : tous les POST
-     * nominaux doivent être authentifiés en client.
+     * La réservation est en mode invité (pas de compte requis) ; ce token sert
+     * uniquement au test du rattachement optionnel (client connecté → rattaché).
      */
     private function clientToken(): string
     {
@@ -85,13 +86,11 @@ class AnnivReservationTest extends WebTestCase
             ?? throw new \RuntimeException('Register OK mais pas de token dans la réponse.');
     }
 
+    /** POST invité (sans authentification) — mode par défaut du tunnel. */
     private function post(array $payload): \Symfony\Component\HttpFoundation\Response
     {
-        $token = $this->clientToken();
-
         static::ensureKernelShutdown();
         $client = static::createClient();
-        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer '.$token);
         $client->request(
             'POST',
             self::POST_URI,
@@ -113,23 +112,45 @@ class AnnivReservationTest extends WebTestCase
         $this->assertSame('superbowler', $body['formuleKey'] ?? null);
     }
 
-    public function testRejectsAnonymous(): void
+    public function testGuestIsCreatedWithoutAccount(): void
     {
-        // Sans compte client → l'endpoint doit refuser (garde-fou serveur).
+        // Mode invité : POST sans aucun cookie/token → 201, demande créée,
+        // aucune erreur liée à l'absence de compte, pas de rattachement.
+        $response = $this->post($this->validPayload(['timeSlot' => '14:00', 'eventDate' => self::futureDate(49)]));
+
+        $this->assertSame(201, $response->getStatusCode(), (string) $response->getContent());
+        $ref = json_decode((string) $response->getContent(), true)['reference'] ?? null;
+        $this->assertNotNull($ref);
+
+        $reservation = static::getContainer()->get(DemandeReservationRepository::class)->findOneBy(['reference' => $ref]);
+        $this->assertNotNull($reservation);
+        $this->assertNull($reservation->getUser(), 'Demande invité : aucun compte rattaché.');
+    }
+
+    public function testAuthenticatedAttachesToAccount(): void
+    {
+        // Rattachement OPTIONNEL : client connecté → 201 + demande liée au compte.
+        $token = $this->clientToken();
+
         static::ensureKernelShutdown();
         $client = static::createClient();
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer '.$token);
         $client->request(
             'POST',
             self::POST_URI,
             server: ['CONTENT_TYPE' => 'application/ld+json'],
-            content: json_encode($this->validPayload(['timeSlot' => '10:00']), JSON_THROW_ON_ERROR),
+            content: json_encode(
+                $this->validPayload(['timeSlot' => '14:30', 'eventDate' => self::futureDate(49)]),
+                JSON_THROW_ON_ERROR,
+            ),
         );
-        $status = $client->getResponse()->getStatusCode();
-        $this->assertContains(
-            $status,
-            [401, 403],
-            'POST anonyme doit être rejeté (401/403), reçu '.$status.' : '.$client->getResponse()->getContent(),
-        );
+        $this->assertSame(201, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        $ref = json_decode((string) $client->getResponse()->getContent(), true)['reference'] ?? null;
+        $this->assertNotNull($ref);
+
+        $reservation = static::getContainer()->get(DemandeReservationRepository::class)->findOneBy(['reference' => $ref]);
+        $this->assertNotNull($reservation);
+        $this->assertNotNull($reservation->getUser(), 'Demande connectée : doit être rattachée au compte.');
     }
 
     public function testRejectsCgvFalse(): void
