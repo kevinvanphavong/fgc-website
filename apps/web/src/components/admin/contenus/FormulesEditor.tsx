@@ -441,16 +441,33 @@ function AnnivGroup() {
   );
 }
 
+/**
+ * Extrait un prix en centimes depuis un libellé texte ("16,50€/enfant" → 1650,
+ * "20€" → 2000, "8,5€" → 850). Renvoie null si aucun nombre n'est trouvé, auquel
+ * cas on ne touche pas à unitPriceCents (on garde la valeur existante).
+ */
+function priceToCents(price: string): number | null {
+  const m = price.match(/(\d+)(?:[.,](\d{1,2}))?/);
+  if (!m) return null;
+  const euros = parseInt(m[1], 10);
+  const cents = m[2] ? parseInt(m[2].padEnd(2, '0'), 10) : 0;
+  return euros * 100 + cents;
+}
+
 function AnnivForm({ initial, onSubmit, pending }: { initial: AnnivCard; onSubmit: (p: Partial<AnnivCard>) => Promise<unknown>; pending: boolean }) {
   const [v, setV] = useState({ ...initial, features: (initial.features ?? []).join('\n') });
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        // unitPriceCents (utilisé par le tunnel de réservation pour calculer le
+        // total) est dérivé du texte « Prix » → les deux restent toujours synchro.
+        const cents = priceToCents(v.price);
         onSubmit({
           ...v,
           features: v.features.split('\n').map((s) => s.trim()).filter(Boolean),
           position: Number(v.position) || 0,
+          ...(cents != null ? { unitPriceCents: cents } : {}),
         });
       }}
       className="flex flex-col gap-3"

@@ -53,6 +53,11 @@ export type AnnivCard = {
   name: string;
   age: string;
   price: string;
+  /** Prix unitaire en centimes — utilisé par le tunnel anniv pour calculer le
+   *  total. Dérivé automatiquement du texte `price` à l'enregistrement (cf.
+   *  FormulesEditor → AnnivForm). Ne pas éditer à la main : il doit rester
+   *  synchro avec `price`, sinon le tunnel affiche un prix différent du site. */
+  unitPriceCents?: number;
   features: string[];
   featured: boolean;
   position: number;
