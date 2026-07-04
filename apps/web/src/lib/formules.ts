@@ -12,26 +12,26 @@ export type HebdoCard = {
 
 export const HEBDO_CARDS: HebdoCard[] = [
   {
-    key: 'bowling-illimite',
+    key: 'bowling-a-volonte',
     tag: 'Lundi & mardi soir',
-    title: 'Bowling illimité',
+    title: 'Bowling à volonté',
     description:
-      "Enchaînez les parties autant que vous voulez, de 20h30 jusqu'à la fermeture. Chaussures incluses. Pas besoin de réserver.",
+      "Parties illimitées + chaussures + 1 soda offert, de 20h30 jusqu'à la fermeture. Sans réservation, dans la limite des 100 premiers.",
     price: '20€/pers.',
     days: 'Lundi · Mardi / 20h30 → fermeture',
   },
   {
     key: 'jeudi-a-gogo',
-    tag: 'Jeudi soir',
+    tag: 'Jeudi · 17h → 22h',
     title: 'Jeudi à gogo',
     description:
-      "Bowling et billard à volonté toute la soirée, avec un soda offert. On accueille les 150 premiers entre 17h et 21h.",
-    price: '24,90€/pers.',
-    days: 'Jeudi / 150 premiers',
+      "L'institution du jeudi : bowling illimité + chaussures + 1 soda offert, de 17h à 22h. 100 premiers servis, sans réservation.",
+    price: '20€/pers.',
+    days: 'Jeudi / 17h → 22h',
   },
   {
     key: 'afterwork',
-    tag: 'Lundi à jeudi · soir',
+    tag: 'Jeudi & vendredi · soir',
     title: 'Pack Afterwork',
     bullets: [
       '2 pizzas au choix',
@@ -39,7 +39,7 @@ export const HEBDO_CARDS: HebdoCard[] = [
       '1h de billard OU fléchettes',
     ],
     price: '68€/groupe',
-    days: 'Lundi → Jeudi soir',
+    days: 'Jeudi → Vendredi soir',
     featured: true,
     savings: '−22 % vs. à la carte (87€)',
   },
@@ -131,6 +131,26 @@ export const PASS_CONDITIONS_DETAILS: string[] = [
 /** Mention compacte à intégrer en footer de chaque carte de pass. */
 export const PASS_CONDITIONS_FOOTER =
   'Lun→Ven hors vacances/fériés · achat sur place le jour J jusqu’à 21h · 200 pass/jour · piste selon dispo';
+
+/**
+ * Conditions d'utilisation des Soirées hebdomadaires (Bowling à volonté + Jeudi à gogo).
+ * Le Pack Afterwork garde des conditions propres (résa conseillée, format groupe).
+ */
+export const HEBDO_CONDITIONS_TAGLINE =
+  '100 premiers/jour · hors vacances scolaires (zone B) et jours fériés · sans réservation · 1 soda offert';
+
+export const HEBDO_CONDITIONS_DETAILS: string[] = [
+  'Bowling à volonté et Jeudi à gogo : dans la limite des 100 premiers clients par jour.',
+  'Offres non disponibles pendant les vacances scolaires zone B et les jours fériés.',
+  "Achat sur place uniquement, le jour de l'utilisation — pas de réservation à l'avance ni de bon cadeau.",
+  '1 soda offert par personne · chaussures de bowling incluses.',
+  'Piste de bowling selon disponibilité — pour garantir votre piste, choisissez une formule Résa (Silver, Gold ou Platinium).',
+  'Pack Afterwork : réservation conseillée à partir de 4 personnes.',
+];
+
+/** Mention compacte à intégrer en footer de carte hebdo. */
+export const HEBDO_CONDITIONS_FOOTER =
+  '100 premiers/jour · hors vacances/fériés · sans résa · piste selon dispo';
 
 export type ResaCard = {
   key: string;
