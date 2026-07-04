@@ -3,7 +3,6 @@
 namespace App\MessageHandler;
 
 use App\Entity\DemandeReservation;
-use App\Enum\DemandeReservationStatus;
 use App\Message\PushReservationToShiftly;
 use App\Repository\DemandeReservationRepository;
 use Psr\Log\LoggerInterface;
@@ -121,23 +120,9 @@ final class PushReservationToShiftlyHandler
             ],
             'formule' => $r->getFormuleKey(),
             'montantTotalCents' => $r->getTotalCents(),
-            'statut' => $this->mapStatus($r->getStatus()),
+            // Statut BRUT (v1.1) : le mapping vers le vocabulaire Shiftly
+            // (EN_ATTENTE_ACOMPTE, CONFIRMEE…) est fait côté Shiftly.
+            'statut' => $r->getStatus()->value,
         ];
-    }
-
-    /**
-     * Mappe le cycle de vie FGC vers le vocabulaire de statut attendu par Shiftly.
-     * Extrait dans une méthode dédiée : si Shiftly change ses libellés, un seul
-     * point à toucher.
-     */
-    private function mapStatus(DemandeReservationStatus $status): string
-    {
-        return match ($status) {
-            DemandeReservationStatus::Nouveau => 'nouveau',
-            DemandeReservationStatus::Contacte => 'contacte',
-            DemandeReservationStatus::Confirme => 'confirme',
-            DemandeReservationStatus::Refuse => 'refuse',
-            DemandeReservationStatus::Passe => 'passe',
-        };
     }
 }
